@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能相册</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>智能相册</h1>
+
+        <div class="controls-section">
+            <h2>控制面板</h2>
+            <div class="control-group">
+                <label for="qwen-analysis-toggle">Qwen-VL图片分析 (上传时自动):</label>
+                <input type="checkbox" id="qwen-analysis-toggle" checked> <span id="qwen-status-text">已开启</span>
+            </div>
+             <div class="control-group">
+                <label for="use-enhanced-search-toggle">使用增强搜索 (利用Qwen描述):</label>
+                <input type="checkbox" id="use-enhanced-search-toggle" checked>
+                <span class="control-note">(此选项前端实现，影响搜索结果展示或未来可影响后端排序)</span>
+            </div>
+            <hr>
+            <div class="control-group upload-control-group">
+                <label for="unified-upload-input">选择图片/文件夹上传:</label>
+                <input type="file" id="unified-upload-input" multiple webkitdirectory directory accept="image/*" class="compact-input">
+                <button id="unified-upload-button" class="compact-button">上传</button>
+            </div>
+            <div id="upload-status" class="status-message"></div>
+            <div id="upload-progress" class="progress-container" style="display: none;">
+                <div id="upload-progress-bar" class="progress-bar">0%</div>
+            </div>
+        </div>
+
+        <div class="search-section">
+            <h2>搜索图片</h2>
+            <input type="text" id="search-input" placeholder="输入中文描述搜索图片...">
+            <button id="search-button">搜索</button>
+            <div id="search-status" class="status-message"></div>
+        </div>
+
+        <div class="gallery-section">
+            <h2>
+                图片库 (<span id="total-images-count">0</span> 张)
+                <span id="search-results-title" style="display:none;">- 搜索结果</span>
+            </h2>
+            <div class="pagination-controls">
+                <button id="prev-page" disabled>&lt; 上一页</button>
+                <span id="current-page-info">第 1 / 1 页</span>
+                <button id="next-page" disabled>下一页 &gt;</button>
+            </div>
+            <div id="image-gallery" class="gallery">
+                </div>
+             <div id="loading-gallery" style="display: none; text-align: center; padding: 20px;">加载中...</div>
+             <div id="no-more-results" style="display: none; text-align: center; padding: 10px; color: #777;">没有更多图片了</div>
+        </div>
+    </div>
+
+    <div id="image-modal" class="modal">
+        <span class="close-button">&times;</span>
+        <img class="modal-content" id="modal-image-element">
+        <div id="modal-caption">
+            <h3 id="modal-filename">文件名将显示在这里</h3>
+            <div id="modal-similarity-container" style="display: none;">
+                <p><strong>相似度:</strong> <span id="modal-similarity">N/A</span></p>
+            </div>
+            <p><strong>Qwen描述:</strong> <span id="modal-qwen-description">无</span></p>
+            <p><strong>Qwen关键词:</strong> <span id="modal-qwen-keywords">无</span></p>
+            <p><strong>已增强:</strong> <span id="modal-is-enhanced">否</span></p>
+            <button id="modal-enhance-button" style="display:none;">对此图片进行增强分析</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
