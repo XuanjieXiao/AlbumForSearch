@@ -4,47 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能相册</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>智能相册</h1>
-
-        <div class="controls-section">
-            <h2>控制面板</h2>
-            <div class="control-group">
-                <label for="qwen-analysis-toggle">Qwen-VL图片分析 (上传时自动):</label>
-                <input type="checkbox" id="qwen-analysis-toggle" checked> <span id="qwen-status-text">已开启</span>
-            </div>
-             <div class="control-group">
-                <label for="use-enhanced-search-toggle">使用增强搜索 (利用Qwen描述):</label>
-                <input type="checkbox" id="use-enhanced-search-toggle" checked>
-                <span class="control-note">(此选项前端实现，影响搜索结果展示或未来可影响后端排序)</span>
-            </div>
-            <hr>
-            <div class="control-group upload-control-group">
-                <label for="unified-upload-input">选择图片/文件夹上传:</label>
-                <input type="file" id="unified-upload-input" multiple webkitdirectory directory accept="image/*" class="compact-input">
-                <button id="unified-upload-button" class="compact-button">上传</button>
-            </div>
-            <div id="upload-status" class="status-message"></div>
-            <div id="upload-progress" class="progress-container" style="display: none;">
-                <div id="upload-progress-bar" class="progress-bar">0%</div>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">智能相册</a>
+            <div class="nav-actions">
+                <button id="nav-upload-button" class="nav-icon-button" title="上传图片">
+                    <i class="fas fa-upload"></i>
+                </button>
+                <a href="{{ url_for('controls_page') }}" class="nav-button" title="控制面板">
+                    <i class="fas fa-cog"></i> 控制面板
+                </a>
             </div>
         </div>
+    </nav>
+    <input type="file" id="unified-upload-input-hidden" multiple accept="image/*" style="display: none;">
 
-        <div class="search-section">
-            <h2>搜索图片</h2>
-            <input type="text" id="search-input" placeholder="输入中文描述搜索图片...">
-            <button id="search-button">搜索</button>
-            <div id="search-status" class="status-message"></div>
-        </div>
+    <div class="main-page-container"> 
+        <section class="hero-section">
+            <h1 class="hero-title">智能相册：文搜图赋能未来</h1>
+            <div class="search-container-hero">
+                <input type="text" id="search-input" placeholder="输入中文描述搜索图片...">
+                <button id="search-button">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="search-status" class="status-message hero-status"></div>
+        </section>
 
-        <div class="gallery-section">
-            <h2>
-                图片库 (<span id="total-images-count">0</span> 张)
-                <span id="search-results-title" style="display:none;">- 搜索结果</span>
-            </h2>
+        <section class="gallery-section">
+            <div class="gallery-header">
+                 <h2>
+                    图片库 (<span id="total-images-count">0</span> 张)
+                    <span id="search-results-title" style="display:none;">- 搜索结果</span>
+                </h2>
+                <div id="upload-status-main" class="status-message" style="text-align: center; margin-bottom:10px;"></div>
+            </div>
             <div class="pagination-controls">
                 <button id="prev-page" disabled>&lt; 上一页</button>
                 <span id="current-page-info">第 1 / 1 页</span>
@@ -52,9 +50,11 @@
             </div>
             <div id="image-gallery" class="gallery">
                 </div>
-             <div id="loading-gallery" style="display: none; text-align: center; padding: 20px;">加载中...</div>
-             <div id="no-more-results" style="display: none; text-align: center; padding: 10px; color: #777;">没有更多图片了</div>
-        </div>
+            <div id="loading-gallery" style="display: none; text-align: center; padding: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> 加载中...
+            </div>
+            <div id="no-more-results" style="display: none; text-align: center; padding: 10px; color: #777;">没有更多图片了</div>
+        </section>
     </div>
 
     <div id="image-modal" class="modal">

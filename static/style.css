@@ -1,362 +1,514 @@
-/* Existing styles ... */
-
-.status-message { /* For upload and search status */
-    margin-top: 10px;
-    font-style: italic;
-    color: #555;
-    min-height: 1.2em; /* Ensure space for messages */
-}
-
-/* Progress Bar Styles */
-.progress-container {
-    width: 100%;
-    background-color: #f3f3f3;
-    border-radius: 5px;
-    margin-top: 10px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,.2);
-}
-
-.progress-bar {
-    width: 0%; /* Initial width */
-    height: 20px;
-    background-color: #4caf50; /* Green for success */
-    text-align: center;
-    line-height: 20px; /* Vertically center text */
-    color: white;
-    border-radius: 5px;
-    transition: width 0.4s ease;
-    font-size: 0.9em;
-}
-
-.progress-bar.success {
-    background-color: #5cb85c; /* Green */
-}
-.progress-bar.warning {
-    background-color: #f0ad4e; /* Orange */
-}
-.progress-bar.error {
-    background-color: #d9534f; /* Red */
-}
-
-
-/* Existing styles for gallery, modal, etc. ... */
+/* static/style.css */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     line-height: 1.6;
     margin: 0;
-    padding: 20px;
-    background-color: #f4f4f4;
+    padding: 0; /* Body padding removed, handled by main-container or nav */
+    background-color: #f8f9fa; /* Lighter overall background */
     color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.container {
+/* Top Navigation Bar */
+.top-nav {
+    background-color: #343a40; /* Dark background */
+    padding: 10px 0;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    position: sticky; /* Sticky nav */
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
     max-width: 1200px;
-    margin: auto;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin: 0 auto;
+    padding: 0 20px; /* Horizontal padding for nav content */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-h1, h2 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
+.nav-brand {
+    font-size: 1.6em; /* Slightly larger brand */
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+}
+.nav-brand:hover {
+    color: #e9ecef;
 }
 
-.controls-section, .upload-section, .search-section, .gallery-section {
-    margin-bottom: 30px;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-.control-group {
-    margin-bottom: 10px;
+.nav-actions {
     display: flex;
     align-items: center;
 }
-.control-group label {
-    margin-right: 10px;
-    font-weight: bold;
-}
 
-/* Upload section specific styles */
-.upload-option {
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-}
-.upload-option label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-}
-.upload-section hr {
-    border: 0;
-    height: 1px;
-    background: #ddd;
-    margin: 20px 0;
-}
-
-
-input[type="text"], input[type="file"] {
-    width: calc(100% - 24px); /* Adjust for padding/border */
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-input[type="file"] {
-    display: block; /* Make file input take full width */
-    margin-bottom: 10px; /* Add some space below file input */
-}
-
-
-button {
-    display: inline-block;
-    background: #5cb85c;
+.nav-button, .nav-icon-button {
+    background-color: #495057; /* Slightly lighter than nav bg */
     color: #fff;
-    padding: 10px 15px;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-left: 12px; /* Spacing between action items */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+    font-size: 0.95em;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.5; /* Ensure text is vertically centered */
+}
+.nav-icon-button {
+    padding: 8px 12px; /* More square for icon button */
+}
+
+.nav-button i, .nav-icon-button i {
+    margin-right: 6px; /* Space between icon and text */
+}
+.nav-icon-button i {
+    margin-right: 0; /* No margin if only icon */
+    font-size: 1.1em; /* Make icon a bit bigger */
+}
+
+
+.nav-button:hover, .nav-icon-button:hover {
+    background-color: #007bff;
+    transform: translateY(-1px);
+}
+.nav-button:active, .nav-icon-button:active {
+    transform: translateY(0px);
+}
+
+
+/* Main container for content below nav */
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto; /* Centered */
+    padding: 25px 20px; /* Padding for content area */
+    width: 100%;
+    box-sizing: border-box;
+    flex-grow: 1; /* Allow main container to grow and push footer down if any */
+}
+
+/* Hero Section for Search */
+.hero-section {
+    text-align: center;
+    padding: 50px 20px 40px 20px; /* More top padding */
+    background-color: #ffffff; /* White background */
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.hero-title {
+    font-size: 2.5em; /* Larger title */
+    font-weight: 300; /* Lighter font weight for modern look */
+    color: #343a40; /* Darker text for title */
+    margin-bottom: 30px;
+}
+
+.search-container-hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 750px; /* Wider search bar */
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+    border-radius: 25px; /* More rounded search bar */
+    overflow: hidden; /* To make border-radius work with button */
+}
+
+#search-input { /* Styles for the main search input in hero */
+    flex-grow: 1;
+    padding: 14px 20px;
+    font-size: 1.05em;
+    border: 1px solid #ced4da; /* Default border */
+    border-radius: 25px 0 0 25px; /* Rounded left */
+    margin-bottom: 0;
+    box-sizing: border-box;
+    border-right: none; /* Remove right border to blend with button */
+}
+#search-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25); /* Bootstrap focus style */
+    outline: none;
+    z-index: 2; /* Bring to front on focus */
+}
+
+#search-button { /* Styles for the main search button in hero */
+    padding: 14px 25px;
+    font-size: 1.05em;
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+    border-radius: 0 25px 25px 0; /* Rounded right */
+    cursor: pointer;
+    /* margin-left: -1px; Removed, border-right:none on input handles this */
+    transition: background-color 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+}
+#search-button i {
+    margin-right: 8px;
+}
+#search-button:hover {
+    background-color: #0056b3;
+}
+
+.status-message.hero-status { /* For search status below hero search bar */
+    margin-top: 20px;
+    font-size: 0.95em;
+    min-height: 1.3em;
+}
+
+/* Gallery Section */
+.gallery-section {
+    padding: 25px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fff;
+    margin-bottom: 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping for smaller screens */
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.gallery-header h2 {
+    margin: 0; /* Remove default margin */
+    text-align: left;
+    font-size: 1.5em;
+}
+#upload-status-main { /* Status for nav upload in gallery header */
+    flex-basis: 100%; /* Take full width if it wraps */
+    text-align: center;
+    margin-top: 5px; /* Space if it wraps */
+    font-size: 0.9em;
+}
+
+
+#search-results-title {
+    font-weight: normal;
+    font-size: 0.9em;
+    color: #555;
+    margin-left: 5px;
+}
+
+
+/* --- Styles for controls.html page --- */
+.controls-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+.controls-page .page-header h1 {
+    margin-bottom: 0;
+    font-size: 1.8em;
+    color: #343a40;
+}
+.back-to-main-btn {
+    background-color: #6c757d;
+    color: white;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+}
+.back-to-main-btn:hover {
+    background-color: #5a6268;
+}
+.back-to-main-btn i {
+    margin-right: 5px;
+}
+
+.control-options-section, .upload-section-controls {
+    margin-bottom: 30px;
+    padding: 25px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fdfdfd;
+}
+.control-options-section h2, .upload-section-controls h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    color: #495057;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.controls-page .control-group { /* Specific to controls page if needed */
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.controls-page .control-group label {
+    margin-right: 10px;
+    font-weight: 500;
+    flex-shrink: 0;
+    color: #333;
+    margin-bottom: 5px;
+}
+.controls-page .control-group input[type="checkbox"] {
+    margin-right: 5px;
+    transform: scale(1.1);
+}
+
+.controls-page .control-note {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+/* Upload on Controls Page */
+.upload-control-group-controls { /* Renamed for clarity */
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping */
+}
+.upload-control-group-controls label {
+    margin-right: 10px;
+    margin-bottom: 8px; /* Space when items wrap */
+}
+.upload-control-group-controls .compact-input {
+    max-width: 300px;
+    padding: 8px 12px;
+    font-size: 0.95em;
+    margin-right: 8px;
+    margin-bottom: 8px; /* Space when items wrap */
+    flex-grow: 1; /* Allow input to take available space */
+}
+.upload-control-group-controls .compact-button {
+    padding: 9px 15px;
+    font-size: 0.95em;
+    margin-bottom: 8px; /* Space when items wrap */
+}
+.upload-control-group-controls .compact-button i {
+    margin-right: 5px;
+}
+
+
+.action-button {
+    background-color: #28a745; /* Green */
+    color: white;
+    padding: 9px 15px;
+    font-size: 0.95em;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-    margin-right: 5px; /* Space between buttons if any */
+    display: inline-flex;
+    align-items: center;
 }
-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+.action-button:hover {
+    background-color: #218838;
+}
+.action-button i {
+    margin-right: 6px;
+}
+
+.danger-button {
+    background-color: #dc3545; /* Red */
+    color: white;
+}
+.danger-button:hover {
+    background-color: #c82333;
+}
+.danger-button i {
+    margin-right: 6px;
 }
 
 
-button:hover:not(:disabled) {
-    background: #4cae4c;
+/* Status Messages */
+.status-message {
+    margin-top: 12px;
+    font-style: italic;
+    color: #555;
+    min-height: 1.2em;
+    font-size: 0.9em;
+    width: 100%; /* Ensure it takes full width for centering if needed */
 }
 
-#upload-files-button, #upload-folder-button {
-    background: #337ab7;
-}
-#upload-files-button:hover:not(:disabled), 
-#upload-folder-button:hover:not(:disabled) {
-    background: #286090;
-}
 
+/* Gallery, Modal, Pagination (Mostly Unchanged, ensure they fit) */
 .gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* Slightly larger items */
+    gap: 18px; /* Slightly larger gap */
 }
-
 .gallery-item {
-    border: 1px solid #eee;
-    border-radius: 4px;
-    padding: 5px;
+    border: 1px solid #e9ecef; /* Lighter border */
+    border-radius: 6px; /* More rounded */
+    padding: 8px;
     text-align: center;
     background-color: #fff;
-    box-shadow: 0 0 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
     cursor: pointer;
-    overflow: hidden; 
+    overflow: hidden;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
-
+.gallery-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
 .gallery-item img {
     max-width: 100%;
-    height: 120px; 
-    object-fit: cover; 
-    border-radius: 3px;
-    margin-bottom: 5px;
+    height: 130px; /* Slightly taller */
+    object-fit: cover;
+    border-radius: 4px; /* Rounded corners for image */
+    margin-bottom: 8px;
 }
-
 .gallery-item p {
     font-size: 0.9em;
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #495057;
 }
 .gallery-item .similarity {
     font-size: 0.8em;
-    color: #777;
+    color: #6c757d;
+    margin-top: 3px;
 }
 .gallery-item .enhanced-badge {
-    font-size: 0.7em;
-    padding: 2px 4px;
-    background-color: #f0ad4e;
+    font-size: 0.75em;
+    padding: 3px 6px;
+    background-color: #17a2b8; /* Info blue for badge */
     color: white;
     border-radius: 3px;
     display: inline-block;
-    margin-top: 3px;
+    margin-top: 5px;
 }
 
-
-/* Modal styles */
 .modal {
-    display: none; 
-    position: fixed; 
-    z-index: 1000; 
-    padding-top: 50px; 
+    display: none;
+    position: fixed;
+    z-index: 1010; /* Higher than sticky nav */
+    padding-top: 60px;
     left: 0;
     top: 0;
-    width: 100%; 
-    height: 100%; 
-    overflow: auto; 
-    background-color: rgba(0,0,0,0.8); 
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.85);
 }
-
 .modal-content {
     margin: auto;
     display: block;
-    max-width: 80%;
-    max-height: 70vh;
-    border-radius: 5px;
+    max-width: 85%;
+    max-height: 75vh;
+    border-radius: 6px;
 }
-
 #modal-caption {
-    margin: auto;
+    margin: 15px auto; /* More space around caption */
     display: block;
-    width: 80%;
+    width: 85%;
     max-width: 700px;
     text-align: left;
-    color: #ccc;
-    padding: 20px 0;
-    background-color: rgba(10,10,10,0.9);
-    border-radius: 0 0 5px 5px;
-    margin-top: -5px; 
+    color: #e0e0e0; /* Lighter text for better contrast on dark */
+    padding: 20px;
+    background-color: rgba(20,20,20,0.95); /* Slightly less opaque */
+    border-radius: 6px;
 }
-#modal-caption h3 { margin-top: 0; color: white;}
-#modal-caption p { margin: 5px 0; }
-
+#modal-caption h3 {
+    margin-top: 0;
+    margin-bottom: 12px; /* More space below title */
+    color: #fff;
+    font-size: 1.3em;
+}
+#modal-caption p {
+    margin: 10px 0; /* More space between P elements */
+    font-size: 0.95em;
+}
+#modal-caption strong {
+    color: #f0f0f0;
+}
 
 .close-button {
     position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
+    top: 20px; /* More space from top */
+    right: 40px; /* More space from right */
+    color: #fff; /* White close button */
+    font-size: 45px;
     font-weight: bold;
     transition: 0.3s;
     cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
-
 .close-button:hover,
 .close-button:focus {
-    color: #bbb;
+    color: #ccc;
     text-decoration: none;
 }
 
 .pagination-controls {
     text-align: center;
-    margin-bottom: 20px;
+    margin: 25px 0; /* More vertical margin */
 }
 .pagination-controls button {
-    margin: 0 5px;
-    background-color: #f0f0f0;
-    color: #333;
-    border: 1px solid #ccc;
+    margin: 0 6px;
+    background-color: #e9ecef;
+    color: #343a40;
+    border: 1px solid #ced4da;
+    padding: 8px 14px;
+    font-size: 0.95em;
+    border-radius: 4px;
 }
 .pagination-controls button:disabled {
-    background-color: #e9e9e9;
-    color: #aaa;
+    background-color: #f8f9fa;
+    color: #adb5bd;
     cursor: not-allowed;
+    border-color: #dee2e6;
 }
 .pagination-controls button:hover:not(:disabled) {
-    background-color: #ddd;
+    background-color: #dee2e6;
+    border-color: #adb5bd;
 }
 #current-page-info {
-    margin: 0 10px;
+    margin: 0 12px;
     font-weight: bold;
-}
-
-
-/* static/style.css */
-/* ... (之前的样式保持不变) ... */
-
-.controls-section h2 {
-    margin-bottom: 15px; /* 稍微减少点h2下的间距 */
-}
-
-.control-group {
-    margin-bottom: 12px; /* 统一控制组间距 */
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap; /* 允许换行 */
-}
-.control-group label {
-    margin-right: 8px;
-    font-weight: bold;
-    flex-shrink: 0; /* 防止标签被压缩 */
-}
-.control-group input[type="checkbox"] {
-    margin-right: 5px;
-}
-.control-note {
-    font-size: 0.85em;
-    color: #666;
-    margin-left: 5px;
-}
-
-/* 新的统一上传组件的样式 */
-.upload-control-group {
-    padding-top: 10px; /* 与其他控制项分隔 */
-    border-top: 1px solid #eee; /* 可选的分隔线 */
-    margin-top: 10px;
-}
-
-.upload-control-group label {
-    margin-bottom: 5px; /* 标签和输入框间距 */
-}
-
-.upload-control-group .compact-input {
-    /* flex-grow: 1; */ /* 让输入框占据剩余空间，但可能过宽 */
-    max-width: 250px; /* 限制最大宽度 */
-    padding: 6px 8px; /* 减小内边距 */
-    font-size: 0.9em; /* 减小字体 */
-    margin-bottom: 0; /* 与按钮在同一行，移除底部边距 */
-    margin-right: 8px;
-}
-
-.upload-control-group .compact-button {
-    padding: 7px 12px; /* 减小按钮内边距 */
-    font-size: 0.9em; /* 减小字体 */
-}
-
-.upload-section { /* 这个class的旧样式可以考虑删掉，如果不再使用独立的上传区域 */
-    margin-bottom: 30px;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-/* 如果旧的 .upload-option, .upload-section hr 也不再使用，也可以清理 */
-
-
-/* 搜索和图库标题 */
-.gallery-section h2 {
-    text-align: left; /* 标题左对齐 */
-}
-#search-results-title {
-    font-weight: normal;
-    font-size: 0.9em;
-    color: #555;
+    color: #495057;
 }
 
 #no-more-results {
     text-align: center;
-    padding: 15px;
-    color: #888;
+    padding: 20px;
+    color: #6c757d;
     font-style: italic;
+    font-size: 0.95em;
 }
 
-
-/* 微调输入框和按钮的基础样式，如果希望全局更紧凑些 */
-/* input[type="text"], input[type="file"] {
-    padding: 8px;
-    margin-bottom: 8px;
+#loading-gallery { /* Updated to use flex for better centering */
+    display: none; /* Initially hidden */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #495057;
+    font-size: 1.1em;
 }
-button {
-    padding: 8px 12px;
-    font-size: 15px;
-} */
+#loading-gallery i {
+    margin-right: 10px;
+    font-size: 1.3em;
+    animation: fa-spin 1.5s infinite linear; /* Ensure spinner animation */
+}
+
+/* Ensure Font Awesome spinner animation is defined if not already by FA stylesheet */
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
