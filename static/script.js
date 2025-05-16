@@ -1,9 +1,9 @@
-// static/script.js
+// AlbumForSearch/static/script.js
 document.addEventListener('DOMContentLoaded', () => {
     // Nav Upload Elements
     const navUploadButton = document.getElementById('nav-upload-button');
     const hiddenUploadInput = document.getElementById('unified-upload-input-hidden');
-    const mainUploadStatus = document.getElementById('upload-status-main'); // For status messages from nav upload
+    const mainUploadStatus = document.getElementById('upload-status-main'); 
 
     // Search Elements
     const searchInput = document.getElementById('search-input');
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchResultsTitleSpan = document.getElementById('search-results-title');
     const noMoreResultsDiv = document.getElementById('no-more-results');
 
-    // Modal elements (assuming they are still the same from your previous version)
+    // Modal elements
     const modal = document.getElementById('image-modal');
     const modalImageElement = document.getElementById('modal-image-element');
     const modalFilename = document.getElementById('modal-filename');
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentModalImageId = null;
     let currentModalIsSearchResult = false;
 
-    // Pagination elements (for gallery view)
+    // Pagination elements
     const paginationControls = document.querySelector('.pagination-controls');
     const prevPageButton = document.getElementById('prev-page');
     const nextPageButton = document.getElementById('next-page');
@@ -44,15 +44,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSearchResults = [];
     let displayedSearchResultsCount = 0;
     const searchResultsBatchSize = 20;
-    const SIMILARITY_THRESHOLD = 0.5; // Defined previously
+    // Default thresholds, will be updated by search response
+    let ENHANCED_SEARCH_THRESHOLD = 0.50; // Keep this as a reference or default
+    let CLIP_ONLY_SEARCH_THRESHOLD = 0.19; // Your new threshold for CLIP-only
     let isLoadingMoreSearchResults = false;
     let navUploadAbortController = null; 
 
     // --- Event Listeners for Main Page (index.html) ---
-
     if (navUploadButton && hiddenUploadInput) {
         navUploadButton.addEventListener('click', () => {
-            hiddenUploadInput.value = null; // Clear previous selection
+            hiddenUploadInput.value = null; 
             hiddenUploadInput.click(); 
         });
         hiddenUploadInput.addEventListener('change', () => {
@@ -73,14 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Generic upload handler, adapted for nav upload status
     function handleUnifiedUpload(files, buttonElement, inputElement, statusElement) {
         if (!files || files.length === 0) {
-            statusElement.textContent = '请先选择文件。';
+            if(statusElement) statusElement.textContent = '请先选择文件。';
             return;
         }
-
-        if (navUploadAbortController) { // Abort previous nav upload if any
+        if (navUploadAbortController) { 
             navUploadAbortController.abort();
         }
         navUploadAbortController = new AbortController();
@@ -94,15 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             formData.append('files', files[i]);
         }
-
         const fileCount = formData.getAll('files').length;
         if (fileCount === 0) {
-            statusElement.textContent = '选择的文件中没有有效的图片文件。';
+            if(statusElement) statusElement.textContent = '选择的文件中没有有效的图片文件。';
             if (inputElement) inputElement.value = null;
             return;
         }
 
-        statusElement.textContent = `正在上传 ${fileCount} 张图片...`;
+        if(statusElement) statusElement.textContent = `正在上传 ${fileCount} 张图片...`;
         if (buttonElement) buttonElement.disabled = true;
 
         fetch('/upload_images', {
@@ -114,18 +112,18 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (signal.aborted) return; 
             if (data.error) {
-                statusElement.textContent = `上传失败: ${data.error}`;
+                if(statusElement) statusElement.textContent = `上传失败: ${data.error}`;
             } else {
-                statusElement.textContent = data.message || `成功处理 ${data.processed_files?.length || 0} 张图片。`;
-                switchToGalleryView(); // Refresh gallery
+                if(statusElement) statusElement.textContent = data.message || `成功处理 ${data.processed_files?.length || 0} 张图片。`;
+                switchToGalleryView(); 
             }
         })
         .catch(error => {
             if (error.name === 'AbortError') {
-                statusElement.textContent = '上传已取消。';
+                if(statusElement) statusElement.textContent = '上传已取消。';
             } else {
                 console.error('上传错误 (Main Page):', error);
-                statusElement.textContent = '上传过程中发生网络错误。';
+                if(statusElement) statusElement.textContent = '上传过程中发生网络错误。';
             }
         })
         .finally(() => {
@@ -133,34 +131,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (inputElement) inputElement.value = null;
             navUploadAbortController = null;
             setTimeout(() => {
-                // Clear status only if it's an upload message and hasn't been overwritten by search
-                if (statusElement.textContent.includes("上传") || statusElement.textContent.includes("处理")) {
-                   // statusElement.textContent = ''; // Decided against auto-clearing for now
+                if (statusElement && (statusElement.textContent.includes("上传") || statusElement.textContent.includes("处理"))) {
+                   // statusElement.textContent = ''; // Optional: auto-clear
                 }
-            }, 7000); // Longer timeout for visibility
+            }, 7000);
         });
     }
-
-    // performSearch, loadMoreSearchResults, displayImages, openModal, closeModal, modalEnhanceButton listener
-    // updateGalleryPaginationControls, prev/nextPageButton listeners, switchToGalleryView, loadGalleryImages
-    // window scroll listener for infinite search
-    // SHOULD BE THE SAME AS YOUR LAST PROVIDED VERSION OF script.js (the one for Control Panel enhancements)
-    // Ensure all these functions are present and correct. I'll re-paste them for completeness.
 
     function performSearch() {
         const queryText = searchInput.value.trim();
         if (!queryText) {
-            searchStatus.textContent = '请输入搜索描述。';
+            if(searchStatus) searchStatus.textContent = '请输入搜索描述。';
             return;
         }
         imageGallery.innerHTML = '';
-        loadingGallery.style.display = 'flex';
-        searchButton.disabled = true;
-        searchStatus.textContent = '正在搜索...';
-        if(mainUploadStatus) mainUploadStatus.textContent = ''; // Clear upload status
-        paginationControls.style.display = 'none';
-        searchResultsTitleSpan.style.display = 'inline';
-        noMoreResultsDiv.style.display = 'none';
+        loadingGallery.style.display = 'flex'; 
+        if(searchButton) searchButton.disabled = true;
+        if(searchStatus) searchStatus.textContent = '正在搜索...';
+        if(mainUploadStatus) mainUploadStatus.textContent = '';
+        if(paginationControls) paginationControls.style.display = 'none';
+        if(searchResultsTitleSpan) searchResultsTitleSpan.style.display = 'inline';
+        if(noMoreResultsDiv) noMoreResultsDiv.style.display = 'none';
 
         fetch('/search_images', {
             method: 'POST',
@@ -170,32 +161,36 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                searchStatus.textContent = `搜索失败: ${data.error}`;
+                if(searchStatus) searchStatus.textContent = `搜索失败: ${data.error}`;
                 imageGallery.innerHTML = `<p>搜索失败: ${data.error}</p>`;
                 currentSearchResults = [];
             } else {
-                currentSearchResults = data.results.filter(img => img.similarity >= SIMILARITY_THRESHOLD);
+                // Determine threshold based on backend search mode
+                const activeSimilarityThreshold = data.search_mode_is_enhanced ? ENHANCED_SEARCH_THRESHOLD : CLIP_ONLY_SEARCH_THRESHOLD;
+                
+                currentSearchResults = data.results.filter(img => img.similarity >= activeSimilarityThreshold);
+                
                 if (currentSearchResults.length > 0) {
-                    searchStatus.textContent = `找到 ${currentSearchResults.length} 张相似度 >= ${SIMILARITY_THRESHOLD} 的相关图片。`;
+                    if(searchStatus) searchStatus.textContent = `找到 ${currentSearchResults.length} 张相似度 >= ${activeSimilarityThreshold.toFixed(2)} 的相关图片。`;
                     displayedSearchResultsCount = 0;
                     imageGallery.innerHTML = '';
                     loadMoreSearchResults();
                 } else {
-                    searchStatus.textContent = `未找到相似度 >= ${SIMILARITY_THRESHOLD} 的图片。`;
-                    imageGallery.innerHTML = `<p>未找到与描述 "${queryText}" 匹配且相似度足够高的图片。</p>`;
+                    if(searchStatus) searchStatus.textContent = `未找到相似度 >= ${activeSimilarityThreshold.toFixed(2)} 的图片。`;
+                    imageGallery.innerHTML = `<p>未找到与描述 "${queryText}" 匹配且相似度足够高的图片 (阈值: ${activeSimilarityThreshold.toFixed(2)})。</p>`;
                     currentSearchResults = [];
                 }
             }
         })
         .catch(error => {
             console.error('搜索错误:', error);
-            searchStatus.textContent = '搜索过程中发生网络错误。';
+            if(searchStatus) searchStatus.textContent = '搜索过程中发生网络错误。';
             imageGallery.innerHTML = '<p>搜索过程中发生网络错误。</p>';
             currentSearchResults = [];
         })
         .finally(() => {
             loadingGallery.style.display = 'none';
-            searchButton.disabled = false;
+            if(searchButton) searchButton.disabled = false;
         });
     }
 
@@ -212,12 +207,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nextBatch.length > 0) {
             displayImages(nextBatch, true, true); 
             displayedSearchResultsCount += nextBatch.length;
-            noMoreResultsDiv.style.display = 'none';
+            if(noMoreResultsDiv) noMoreResultsDiv.style.display = 'none';
         } else {
             if (displayedSearchResultsCount > 0 && currentSearchResults.length > 0 && displayedSearchResultsCount >= currentSearchResults.length) {
-                 noMoreResultsDiv.style.display = 'block';
+                 if(noMoreResultsDiv) noMoreResultsDiv.style.display = 'block';
             } else if (displayedSearchResultsCount === 0 && currentSearchResults.length === 0) {
-                noMoreResultsDiv.style.display = 'none';
+                if(noMoreResultsDiv) noMoreResultsDiv.style.display = 'none';
             }
         }
         isLoadingMoreSearchResults = false;
@@ -230,7 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!images || images.length === 0) {
             if (!append) { 
-                 if (isSearchResult) imageGallery.innerHTML = `<p>未找到相似度 >= ${SIMILARITY_THRESHOLD} 的图片。</p>`;
+                 // Determine threshold based on the context if possible, or use a general message
+                 const activeThreshold = isSearchResult ? (document.getElementById('use-enhanced-search-toggle-controls') && !document.getElementById('use-enhanced-search-toggle-controls').checked ? CLIP_ONLY_SEARCH_THRESHOLD : ENHANCED_SEARCH_THRESHOLD) : ENHANCED_SEARCH_THRESHOLD;
+                 if (isSearchResult) imageGallery.innerHTML = `<p>未找到相似度 >= ${activeThreshold.toFixed(2)} 的图片。</p>`;
                  else imageGallery.innerHTML = '<p>图片库为空，请上传图片。</p>';
             }
             return;
@@ -315,6 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalIsEnhanced.textContent = '网络错误';
             });
     }
+
     if (closeModalButton) {
         closeModalButton.addEventListener('click', () => {
             modal.style.display = 'none';
@@ -338,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(data => {
                     if (data.error) {
                         alert(`增强失败: ${data.error}`);
-                        if(data.is_enhanced !== undefined) {
+                        if(data.is_enhanced !== undefined) { 
                             modalIsEnhanced.textContent = data.is_enhanced ? '是' : '否';
                             if (data.qwen_description) modalQwenDescription.textContent = data.qwen_description;
                             if (data.qwen_keywords) modalQwenKeywords.textContent = data.qwen_keywords.join(', ');
@@ -377,7 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
     }
-
 
     function updateGalleryPaginationControls(totalImages, currentPageNum, imagesPerPageNum, totalPagesCalculated) {
         galleryTotalPages = totalPagesCalculated > 0 ? totalPagesCalculated : 1;
@@ -448,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('scroll', () => {
         if (currentSearchResults.length > 0 && !isLoadingMoreSearchResults) {
-            if (paginationControls && paginationControls.style.display === 'none') { // Check if in search view
+            if (paginationControls && paginationControls.style.display === 'none') { 
                  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
                     if (displayedSearchResultsCount < currentSearchResults.length) {
                         loadMoreSearchResults();
@@ -460,5 +457,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    switchToGalleryView(); // Initial load for the main page
+    switchToGalleryView(); 
 });

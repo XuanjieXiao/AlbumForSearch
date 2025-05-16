@@ -38,13 +38,12 @@ CORS(app)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
 
 # --- 全局配置和常量 ---
-# ... (保持不变) ...
 CLIP_MODEL_NAME = "ViT-H-14"
 CLIP_MODEL_DOWNLOAD_ROOT = os.path.join(CURRENT_DIR, "models")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 BCE_OUTPUT_DIM = fu.BCE_EMBEDDING_DIM
-FAISS_TOTAL_DIM = fu.TOTAL_EMBEDDING_DIM
+FAISS_TOTAL_DIM = fu.TOTAL_EMBEDDING_DIM 
 
 UPLOADS_DIR = os.path.join(CURRENT_DIR, "uploads")
 THUMBNAILS_DIR = os.path.join(CURRENT_DIR, "thumbnails")
@@ -62,7 +61,7 @@ APP_CONFIG_FILE = os.path.join(CURRENT_DIR, "data", "app_config.json")
 
 default_app_config = {
     "qwen_vl_analysis_enabled": True,
-    "use_enhanced_search": True # 新增：使用增强搜索的默认值
+    "use_enhanced_search": True
 }
 
 app_config = {}
@@ -73,7 +72,6 @@ def load_app_config():
         try:
             with open(APP_CONFIG_FILE, 'r') as f:
                 app_config = json.load(f)
-            #确保所有默认键都存在
             for key, value in default_app_config.items():
                 app_config.setdefault(key, value)
             logging.info(f"应用配置已从 {APP_CONFIG_FILE} 加载。")
@@ -88,6 +86,7 @@ def load_app_config():
 def save_app_config():
     global app_config
     try:
+        os.makedirs(os.path.dirname(APP_CONFIG_FILE), exist_ok=True)
         with open(APP_CONFIG_FILE, 'w') as f:
             json.dump(app_config, f, indent=4)
         logging.info(f"应用配置已保存到 {APP_CONFIG_FILE}。")
@@ -95,8 +94,6 @@ def save_app_config():
         logging.error(f"保存配置到 {APP_CONFIG_FILE} 失败: {e}")
 
 
-# --- 模型加载与核心功能函数 (保持不变) ---
-# ... (load_clip_model_on_startup, compute_clip_image_embedding, etc. 保持不变) ...
 def load_clip_model_on_startup():
     global clip_model, clip_preprocess
     try:
@@ -107,13 +104,11 @@ def load_clip_model_on_startup():
             download_root=CLIP_MODEL_DOWNLOAD_ROOT
         )
         clip_model.eval()
-
         dummy_img = Image.new('RGB', (224, 224))
         dummy_tensor = clip_preprocess(dummy_img).unsqueeze(0).to(DEVICE)
         with torch.no_grad():
             dummy_feat = clip_model.encode_image(dummy_tensor)
         actual_clip_dim = dummy_feat.shape[1]
-
         if actual_clip_dim != fu.CLIP_EMBEDDING_DIM:
             logging.error(f"致命错误: CLIP模型 '{CLIP_MODEL_NAME}' 的实际输出维度 ({actual_clip_dim}) "
                           f"与 faiss_utils.py 中配置的 CLIP_EMBEDDING_DIM ({fu.CLIP_EMBEDDING_DIM}) 不符。请修正配置。")
@@ -180,7 +175,7 @@ def process_single_image_upload(file_storage):
     original_path = os.path.join(UPLOADS_DIR, saved_original_filename)
     saved_thumbnail_filename = unique_filename_base + "_thumb" + file_extension
     thumbnail_path = os.path.join(THUMBNAILS_DIR, saved_thumbnail_filename)
-    image_db_id = None 
+    image_db_id = None
     actual_faiss_id = None
 
     try:
@@ -199,26 +194,26 @@ def process_single_image_upload(file_storage):
 
         zeros_bce_emb = np.zeros(BCE_OUTPUT_DIM, dtype=np.float32)
         concatenated_emb = np.concatenate((clip_img_emb, zeros_bce_emb))
-
+        
         image_db_id = db.add_image_to_db(
             original_filename=original_filename,
             original_path=original_path,
             thumbnail_path=thumbnail_path,
-            clip_embedding=clip_img_emb
+            clip_embedding=clip_img_emb 
         )
 
         if image_db_id:
-            actual_faiss_id = image_db_id 
+            actual_faiss_id = image_db_id
             db.update_faiss_id_for_image(image_db_id, actual_faiss_id)
 
             if fu.add_vector_to_index(concatenated_emb, actual_faiss_id):
                 logging.info(f"图片 '{original_filename}' (DB ID: {image_db_id}, FAISS ID: {actual_faiss_id}) 处理完成并入库。")
-                if app_config.get("qwen_vl_analysis_enabled"): # 使用 app_config.get()
+                if app_config.get("qwen_vl_analysis_enabled", True):
                     logging.info(f"全局Qwen-VL分析已开启，开始分析图片 ID: {image_db_id}")
                     qwen_result = qwen_service.analyze_image_content(original_path)
                     if qwen_result and (qwen_result["description"] or qwen_result["keywords"]):
                         db.update_image_enhancement(image_db_id, qwen_result["description"], qwen_result["keywords"])
-                        bce_desc_emb = bce_service.get_bce_embedding(qwen_result["description"])
+                        bce_desc_emb = bce_service.get_bce_embedding(qwen_result["description"]) 
                         updated_concatenated_emb = np.concatenate((clip_img_emb, bce_desc_emb))
                         fu.update_vector_in_index(updated_concatenated_emb, actual_faiss_id)
                         logging.info(f"图片 ID: {image_db_id} Qwen-VL分析完成并更新了FAISS向量。")
@@ -226,7 +221,7 @@ def process_single_image_upload(file_storage):
                         logging.warning(f"图片 ID: {image_db_id} Qwen-VL分析未返回有效结果。")
                 return {"id": image_db_id, "faiss_id": actual_faiss_id, "filename": original_filename, "status": "success"}
             else:
-                logging.error(f"图片 '{original_filename}' 添加到FAISS失败 (FAISS ID: {actual_faiss_id})。正在回滚数据库记录。")
+                logging.error(f"图片 '{original_filename}' 添加到FAISS失败。回滚数据库记录。")
                 db.delete_image_from_db(image_db_id)
         else:
             logging.error(f"图片 '{original_filename}' 存入数据库失败。")
@@ -234,6 +229,7 @@ def process_single_image_upload(file_storage):
         if os.path.exists(original_path): os.remove(original_path)
         if thumbnail_path and os.path.exists(thumbnail_path): os.remove(thumbnail_path)
         return None
+
     except Exception as e:
         logging.error(f"处理上传图片 '{original_filename}' 时发生严重错误: {e}", exc_info=True)
         if image_db_id:
@@ -256,7 +252,6 @@ def controls_page():
 
 @app.route('/upload_images', methods=['POST'])
 def upload_images_api():
-    # ... (保持不变, process_single_image_upload 已修改)
     if 'files' not in request.files:
         return jsonify({"error": "请求中未找到文件部分(files key missing)"}), 400
     files = request.files.getlist('files')
@@ -267,13 +262,13 @@ def upload_images_api():
     failed_count = 0
     for file_storage in files:
         if file_storage and file_storage.filename:
-            result = process_single_image_upload(file_storage) 
+            result = process_single_image_upload(file_storage)
             if result:
                 processed_results.append(result)
             else:
                 failed_count += 1
         else:
-            failed_count +=1 
+            failed_count +=1
     
     if processed_results:
         fu.save_faiss_index()
@@ -284,41 +279,45 @@ def upload_images_api():
     else:
         return jsonify({"error": f"所有有效图片处理均失败。"}), 500
 
-
 @app.route('/search_images', methods=['POST'])
 def search_images_api():
-    # ... (如果 "use_enhanced_search" 需要影响后端，可以在这里读取 app_config['use_enhanced_search'])
     if not clip_model or fu.faiss_index is None:
         return jsonify({"error": "模型或FAISS索引未初始化。"}), 503
     data = request.get_json()
     query_text = data.get('query_text', '').strip()
-    top_k = int(data.get('top_k', 200)) 
+    top_k = int(data.get('top_k', 200))
     if not query_text:
         return jsonify({"error": "查询文本不能为空"}), 400
 
-    # 示例：如果 use_enhanced_search 为 false，可以考虑只用CLIP特征或调整BCE权重
-    # if not app_config.get("use_enhanced_search", True):
-    #     logging.info("增强搜索已禁用，将调整搜索策略 (示例：可能仅使用CLIP或降低BCE影响)")
-        # query_bce_emb = np.zeros(BCE_OUTPUT_DIM, dtype=np.float32) # 例如，如果禁用则BCE部分为0
-    # else:
-    #     query_bce_emb = bce_service.get_bce_embedding(query_text)
-    
-    query_clip_emb = compute_clip_text_embedding(query_text)
+    query_clip_emb = compute_clip_text_embedding(query_text) 
     if query_clip_emb is None:
         return jsonify({"error": "无法计算查询文本的CLIP embedding"}), 500
-    
-    query_bce_emb = bce_service.get_bce_embedding(query_text) # 当前始终计算BCE
 
+    use_enhanced = app_config.get("use_enhanced_search", True) # Get current setting
+    logging.info(f"搜索模式: {'增强搜索' if use_enhanced else '仅CLIP搜索'}")
+
+    if use_enhanced:
+        query_bce_emb = bce_service.get_bce_embedding(query_text) 
+    else:
+        query_bce_emb = np.zeros(BCE_OUTPUT_DIM, dtype=np.float32)
+        logging.info("仅CLIP搜索：查询向量的BCE部分已置零。")
+    
     concatenated_query_emb = np.concatenate((query_clip_emb, query_bce_emb))
+    
     distances, faiss_ids = fu.search_vectors_in_index(concatenated_query_emb, top_k=top_k)
     results = []
-    # ... (其余部分不变)
     if not faiss_ids:
-        return jsonify({"query": query_text, "results": [], "message": "未找到匹配图片。"}), 200
+        return jsonify({
+            "query": query_text, 
+            "results": [], 
+            "message": "未找到匹配图片。",
+            "search_mode_is_enhanced": use_enhanced # Return search mode status
+        }), 200
 
     for i in range(len(faiss_ids)):
         faiss_id = int(faiss_ids[i])
         similarity = float(distances[i])
+        
         image_data = db.get_image_by_faiss_id(faiss_id)
         if image_data:
             try:
@@ -332,29 +331,30 @@ def search_images_api():
                 "filename": image_data["original_filename"],
                 "thumbnail_url": f"/thumbnails/{os.path.basename(image_data['thumbnail_path'])}" if image_data["thumbnail_path"] else None,
                 "original_url": f"/uploads/{os.path.basename(image_data['original_path'])}" if image_data["original_path"] else None,
-                "similarity": similarity,
+                "similarity": similarity, 
                 "qwen_description": image_data["qwen_description"],
                 "qwen_keywords": keywords_list,
                 "is_enhanced": image_data["is_enhanced"]
             })
         else:
             logging.warning(f"在数据库中未找到FAISS ID为 {faiss_id} 的图片记录。")
-    return jsonify({"query": query_text, "results": results}), 200
+    
+    return jsonify({
+        "query": query_text, 
+        "results": results,
+        "search_mode_is_enhanced": use_enhanced # Return search mode status
+    }), 200
 
 
 @app.route('/image_details/<int:image_db_id>', methods=['GET'])
 def get_image_details_api(image_db_id):
-    # ... (保持不变)
     image_data = db.get_image_by_id(image_db_id)
     if not image_data:
         return jsonify({"error": f"图片 ID {image_db_id} 未找到"}), 404
-
     try:
         keywords_list = json.loads(image_data["qwen_keywords"]) if image_data["qwen_keywords"] else []
     except json.JSONDecodeError:
         keywords_list = []
-        logging.warning(f"图片ID {image_db_id} 的 qwen_keywords 字段无法解析为JSON: {image_data['qwen_keywords']}")
-    
     details = {
         "id": image_data["id"],
         "filename": image_data["original_filename"],
@@ -370,6 +370,9 @@ def get_image_details_api(image_db_id):
 def handle_app_settings():
     global app_config
     if request.method == 'GET':
+        # Ensure default values are present if config file was manually tampered with or empty
+        for key, value in default_app_config.items():
+            app_config.setdefault(key, value)
         return jsonify(app_config), 200
     elif request.method == 'POST':
         data = request.get_json()
@@ -393,13 +396,9 @@ def handle_app_settings():
         else:
             return jsonify({"message": "未提供有效设置进行更新。", "settings": app_config}), 200
 
-# 移除旧的 /config/qwen_analysis 端点，因为它被 /config/settings 取代
-# @app.route('/config/qwen_analysis', methods=['GET', 'POST'])
-# def toggle_qwen_analysis_api(): ...
 
 @app.route('/enhance_image/<int:image_db_id>', methods=['POST'])
 def enhance_single_image_api(image_db_id):
-    # ... (保持不变)
     image_data = db.get_image_by_id(image_db_id)
     if not image_data:
         return jsonify({"error": f"图片 ID {image_db_id} 未找到"}), 404
@@ -407,12 +406,12 @@ def enhance_single_image_api(image_db_id):
         return jsonify({"message": f"图片 ID {image_db_id} 已经分析过了。"}), 200
 
     original_path = image_data["original_path"]
-    if not original_path or not os.path.exists(original_path): # Check path validity
+    if not original_path or not os.path.exists(original_path):
         return jsonify({"error": f"图片 ID {image_db_id} 的原始文件路径无效或文件不存在。"}), 404
 
-    clip_img_emb = db.get_clip_embedding_for_image(image_db_id)
+    clip_img_emb = db.get_clip_embedding_for_image(image_db_id) 
     if clip_img_emb is None:
-        logging.warning(f"图片ID {image_db_id} 在数据库中未找到CLIP embedding，尝试重新计算...")
+        logging.warning(f"图片ID {image_db_id} 在数据库中未找到纯CLIP embedding，尝试重新计算...")
         clip_img_emb = compute_clip_image_embedding(original_path)
         if clip_img_emb is None:
             return jsonify({"error": f"无法获取或计算图片 ID {image_db_id} 的CLIP embedding"}), 500
@@ -425,10 +424,10 @@ def enhance_single_image_api(image_db_id):
         if not update_success:
              return jsonify({"error": f"图片 ID {image_db_id} 分析结果存入数据库失败。"}), 500
 
-        bce_desc_emb = bce_service.get_bce_embedding(qwen_result["description"])
+        bce_desc_emb = bce_service.get_bce_embedding(qwen_result["description"]) 
         updated_concatenated_emb = np.concatenate((clip_img_emb, bce_desc_emb))
 
-        if image_data["faiss_id"] is None: 
+        if image_data["faiss_id"] is None:
             logging.error(f"图片 ID {image_db_id} 在数据库中没有FAISS ID，无法更新FAISS向量。")
             return jsonify({"error": f"图片 ID {image_db_id} 数据不一致，缺少FAISS ID。"}), 500
 
@@ -441,13 +440,13 @@ def enhance_single_image_api(image_db_id):
                  "qwen_keywords": qwen_result["keywords"],
                  "is_enhanced": True
                  }), 200
-        else: 
+        else:
             logging.error(f"图片 ID: {image_db_id} FAISS向量更新失败，但DB可能已更新增强状态。")
             return jsonify({
                 "error": f"图片 ID {image_db_id} 分析信息已存DB，但FAISS更新失败。",
                 "qwen_description": qwen_result["description"],
                 "qwen_keywords": qwen_result["keywords"],
-                "is_enhanced": True 
+                "is_enhanced": True
                 }), 500
     else:
         logging.warning(f"图片 ID: {image_db_id} 手动Qwen-VL分析未返回有效结果。")
@@ -455,7 +454,6 @@ def enhance_single_image_api(image_db_id):
 
 @app.route('/images', methods=['GET'])
 def get_images_list_api():
-    # ... (保持不变)
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 20, type=int)
     images, total_count = db.get_all_images(page, limit)
@@ -489,11 +487,11 @@ def serve_thumbnail(filename):
 
 # --- 应用启动 ---
 if __name__ == '__main__':
-    load_app_config() # 加载应用配置
+    load_app_config()
     db.init_db()
-    fu.init_faiss_index()
+    fu.init_faiss_index() 
     load_clip_model_on_startup()
-    if not bce_service.bce_model:
+    if not bce_service.bce_model: 
         logging.warning("BCE模型在bce_service中未能加载。请检查日志。")
     if not clip_model:
         logging.warning("CLIP模型未能加载。请检查日志。")
