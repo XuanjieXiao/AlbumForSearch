@@ -1,10 +1,10 @@
-/* static/style.css */
+/* AlbumForSearch/static/style.css */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     line-height: 1.6;
     margin: 0;
-    padding: 0; /* Body padding removed, handled by main-container or nav */
-    background-color: #f8f9fa; /* Lighter overall background */
+    padding: 0;
+    background-color: #f8f9fa;
     color: #333;
     display: flex;
     flex-direction: column;
@@ -13,12 +13,12 @@ body {
 
 /* Top Navigation Bar */
 .top-nav {
-    background-color: #343a40; /* Dark background */
-    padding: 10px 0;
+    background-color: #343a40;
+    padding: 8px 0;
     color: #fff;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     width: 100%;
-    position: sticky; /* Sticky nav */
+    position: sticky;
     top: 0;
     z-index: 1000;
 }
@@ -26,17 +26,25 @@ body {
 .nav-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px; /* Horizontal padding for nav content */
+    padding: 0 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .nav-brand {
-    font-size: 1.6em; /* Slightly larger brand */
+    font-size: 1.5em;
     font-weight: bold;
     color: #fff;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+.nav-logo {
+    height: 32px;
+    width: auto;
+    margin-right: 10px;
+    vertical-align: middle;
 }
 .nav-brand:hover {
     color: #e9ecef;
@@ -48,66 +56,79 @@ body {
 }
 
 .nav-button, .nav-icon-button {
-    background-color: #495057; /* Slightly lighter than nav bg */
+    background-color: #495057;
     color: #fff;
     border: none;
     padding: 8px 15px;
     border-radius: 5px;
     text-decoration: none;
-    margin-left: 12px; /* Spacing between action items */
+    margin-left: 12px;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out, transform 0.1s ease;
     font-size: 0.95em;
     display: inline-flex;
     align-items: center;
-    line-height: 1.5; /* Ensure text is vertically centered */
+    line-height: 1.5;
 }
 .nav-icon-button {
-    padding: 8px 12px; /* More square for icon button */
+    padding: 8px 12px;
 }
 
 .nav-button i, .nav-icon-button i {
-    margin-right: 6px; /* Space between icon and text */
+    margin-right: 6px;
 }
 .nav-icon-button i {
-    margin-right: 0; /* No margin if only icon */
-    font-size: 1.1em; /* Make icon a bit bigger */
+    margin-right: 0;
+    font-size: 1.1em;
 }
 
-
 .nav-button:hover, .nav-icon-button:hover {
-    background-color: #007bff;
+    background-color: #007bff; /* Default hover, can be overridden */
     transform: translateY(-1px);
 }
 .nav-button:active, .nav-icon-button:active {
     transform: translateY(0px);
 }
 
-
-/* Main container for content below nav */
-.main-container {
-    max-width: 1200px;
-    margin: 0 auto; /* Centered */
-    padding: 25px 20px; /* Padding for content area */
-    width: 100%;
-    box-sizing: border-box;
-    flex-grow: 1; /* Allow main container to grow and push footer down if any */
+.nav-button.action-button { /* For non-danger main actions like Tag */
+    background-color: #28a745; /* Green */
+}
+.nav-button.action-button:hover {
+    background-color: #218838;
 }
 
-/* Hero Section for Search */
+.nav-button.danger-button { /* For destructive actions like Delete */
+    background-color: #dc3545; /* Red */
+}
+.nav-button.danger-button:hover {
+    background-color: #c82333;
+}
+
+
+/* Main Page Container */
+.main-page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    flex-grow: 1;
+}
+
+/* Hero Section */
 .hero-section {
     text-align: center;
-    padding: 50px 20px 40px 20px; /* More top padding */
-    background-color: #ffffff; /* White background */
+    padding: 50px 20px 40px 20px;
+    background-color: #ffffff;
     border-radius: 8px;
     margin-bottom: 30px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .hero-title {
-    font-size: 2.5em; /* Larger title */
-    font-weight: 300; /* Lighter font weight for modern look */
-    color: #343a40; /* Darker text for title */
+    font-size: 2.5em;
+    font-weight: 300;
+    color: #343a40;
     margin-bottom: 30px;
 }
 
@@ -115,39 +136,38 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    max-width: 750px; /* Wider search bar */
+    max-width: 750px;
     margin: 0 auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Subtle shadow for depth */
-    border-radius: 25px; /* More rounded search bar */
-    overflow: hidden; /* To make border-radius work with button */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 25px;
+    overflow: hidden;
 }
 
-#search-input { /* Styles for the main search input in hero */
+#search-input {
     flex-grow: 1;
     padding: 14px 20px;
     font-size: 1.05em;
-    border: 1px solid #ced4da; /* Default border */
-    border-radius: 25px 0 0 25px; /* Rounded left */
+    border: 1px solid #ced4da;
+    border-radius: 25px 0 0 25px;
     margin-bottom: 0;
     box-sizing: border-box;
-    border-right: none; /* Remove right border to blend with button */
+    border-right: none;
 }
 #search-input:focus {
     border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25); /* Bootstrap focus style */
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
     outline: none;
-    z-index: 2; /* Bring to front on focus */
+    z-index: 2;
 }
 
-#search-button { /* Styles for the main search button in hero */
+#search-button {
     padding: 14px 25px;
     font-size: 1.05em;
     background-color: #007bff;
     color: white;
     border: 1px solid #007bff;
-    border-radius: 0 25px 25px 0; /* Rounded right */
+    border-radius: 0 25px 25px 0;
     cursor: pointer;
-    /* margin-left: -1px; Removed, border-right:none on input handles this */
     transition: background-color 0.2s ease-in-out;
     display: inline-flex;
     align-items: center;
@@ -159,7 +179,7 @@ body {
     background-color: #0056b3;
 }
 
-.status-message.hero-status { /* For search status below hero search bar */
+.status-message.hero-status {
     margin-top: 20px;
     font-size: 0.95em;
     min-height: 1.3em;
@@ -178,23 +198,22 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Allow wrapping for smaller screens */
-    margin-bottom: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 10px; /* Reduced margin */
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
 }
 .gallery-header h2 {
-    margin: 0; /* Remove default margin */
+    margin: 0;
     text-align: left;
     font-size: 1.5em;
 }
-#upload-status-main { /* Status for nav upload in gallery header */
-    flex-basis: 100%; /* Take full width if it wraps */
+#upload-status-main {
+    flex-basis: 100%;
     text-align: center;
-    margin-top: 5px; /* Space if it wraps */
+    margin-top: 5px;
     font-size: 0.9em;
 }
-
 
 #search-results-title {
     font-weight: normal;
@@ -203,6 +222,28 @@ body {
     margin-left: 5px;
 }
 
+.gallery-controls {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+.gallery-controls #selection-info {
+    font-size: 0.9em;
+    color: #555;
+}
+.gallery-controls .action-button { /* Reusing existing action-button style */
+    padding: 6px 12px;
+    font-size: 0.9em;
+}
+.gallery-controls .action-button i {
+    margin-right: 4px;
+}
+
+
+/* General Container for Controls page */
+.container.controls-page {
+    max-width: 900px; 
+}
 
 /* --- Styles for controls.html page --- */
 .controls-page .page-header {
@@ -251,20 +292,20 @@ body {
     padding-bottom: 10px;
 }
 
-.controls-page .control-group { /* Specific to controls page if needed */
-    margin-bottom: 18px;
+.control-group {
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
 }
-.controls-page .control-group label {
+.control-group label {
     margin-right: 10px;
     font-weight: 500;
     flex-shrink: 0;
     color: #333;
     margin-bottom: 5px;
 }
-.controls-page .control-group input[type="checkbox"] {
+.control-group input[type="checkbox"] {
     margin-right: 5px;
     transform: scale(1.1);
 }
@@ -275,36 +316,34 @@ body {
     margin-left: 8px;
 }
 
-/* Upload on Controls Page */
-.upload-control-group-controls { /* Renamed for clarity */
+.upload-control-group-controls {
     display: flex;
     align-items: center;
-    flex-wrap: wrap; /* Allow wrapping */
+    flex-wrap: wrap;
 }
 .upload-control-group-controls label {
     margin-right: 10px;
-    margin-bottom: 8px; /* Space when items wrap */
+    margin-bottom: 8px;
 }
 .upload-control-group-controls .compact-input {
     max-width: 300px;
     padding: 8px 12px;
     font-size: 0.95em;
     margin-right: 8px;
-    margin-bottom: 8px; /* Space when items wrap */
-    flex-grow: 1; /* Allow input to take available space */
+    margin-bottom: 8px;
+    flex-grow: 1;
 }
 .upload-control-group-controls .compact-button {
     padding: 9px 15px;
     font-size: 0.95em;
-    margin-bottom: 8px; /* Space when items wrap */
+    margin-bottom: 8px;
 }
 .upload-control-group-controls .compact-button i {
     margin-right: 5px;
 }
 
-
 .action-button {
-    background-color: #28a745; /* Green */
+    background-color: #28a745;
     color: white;
     padding: 9px 15px;
     font-size: 0.95em;
@@ -321,8 +360,8 @@ body {
     margin-right: 6px;
 }
 
-.danger-button {
-    background-color: #dc3545; /* Red */
+.danger-button { /* General danger button style */
+    background-color: #dc3545;
     color: white;
 }
 .danger-button:hover {
@@ -332,44 +371,62 @@ body {
     margin-right: 6px;
 }
 
-
-/* Status Messages */
 .status-message {
     margin-top: 12px;
     font-style: italic;
     color: #555;
     min-height: 1.2em;
     font-size: 0.9em;
-    width: 100%; /* Ensure it takes full width for centering if needed */
+    width: 100%;
 }
 
-
-/* Gallery, Modal, Pagination (Mostly Unchanged, ensure they fit) */
 .gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* Slightly larger items */
-    gap: 18px; /* Slightly larger gap */
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 18px;
 }
 .gallery-item {
-    border: 1px solid #e9ecef; /* Lighter border */
-    border-radius: 6px; /* More rounded */
+    border: 2px solid #e9ecef; /* Default border */
+    border-radius: 6px;
     padding: 8px;
     text-align: center;
     background-color: #fff;
     box-shadow: 0 2px 5px rgba(0,0,0,0.07);
     cursor: pointer;
     overflow: hidden;
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative; /* For selection overlay/badge */
 }
 .gallery-item:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
+.gallery-item.selected {
+    border-color: #007bff; /* Highlight color for selected items */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+}
+.gallery-item.selected::before { /* Optional: Add a checkmark or overlay */
+    content: '\f00c'; /* FontAwesome check icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: white;
+    background-color: #007bff;
+    padding: 3px 5px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
 .gallery-item img {
     max-width: 100%;
-    height: 130px; /* Slightly taller */
+    height: 130px;
     object-fit: cover;
-    border-radius: 4px; /* Rounded corners for image */
+    border-radius: 4px;
     margin-bottom: 8px;
 }
 .gallery-item p {
@@ -379,6 +436,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     color: #495057;
+    padding: 0 3px;
 }
 .gallery-item .similarity {
     font-size: 0.8em;
@@ -388,77 +446,200 @@ body {
 .gallery-item .enhanced-badge {
     font-size: 0.75em;
     padding: 3px 6px;
-    background-color: #17a2b8; /* Info blue for badge */
+    background-color: #17a2b8;
     color: white;
     border-radius: 3px;
     display: inline-block;
     margin-top: 5px;
+    align-self: center;
 }
 
+/* Modal (General) */
 .modal {
-    display: none;
+    display: none; 
     position: fixed;
-    z-index: 1010; /* Higher than sticky nav */
-    padding-top: 60px;
+    z-index: 1010;
+    padding: 20px;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.85);
+    background-color: rgba(0,0,0,0.7); /* Darker overlay for dialogs */
+    box-sizing: border-box;
+    align-items: center; /* For flex centering */
+    justify-content: center; /* For flex centering */
 }
-.modal-content {
-    margin: auto;
+
+/* Image Detail Modal Specifics */
+#image-modal .modal-inner-container { 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%; 
+    height: 100%;
+    max-width: 95vw; 
+    max-height: 95vh;
+    margin: auto; 
+}
+
+#image-modal .modal-content { /* Image element itself */
     display: block;
-    max-width: 85%;
-    max-height: 75vh;
+    max-width: 100%;
+    max-height: calc(100% - 120px); /* Leave space for caption */
+    object-fit: contain;
     border-radius: 6px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
-#modal-caption {
-    margin: 15px auto; /* More space around caption */
+
+#image-modal #modal-caption {
+    margin-top: 15px;
     display: block;
-    width: 85%;
-    max-width: 700px;
+    width: 100%; 
+    min-width: 300px; 
+    max-width: 800px; 
     text-align: left;
-    color: #e0e0e0; /* Lighter text for better contrast on dark */
-    padding: 20px;
-    background-color: rgba(20,20,20,0.95); /* Slightly less opaque */
+    color: #e0e0e0;
+    padding: 15px 20px;
+    background-color: rgba(20,20,20,0.95);
     border-radius: 6px;
+    box-sizing: border-box;
+    max-height: 25vh; /* Slightly more space for caption */
+    overflow-y: auto;
 }
-#modal-caption h3 {
+
+#image-modal #modal-caption h3 {
     margin-top: 0;
-    margin-bottom: 12px; /* More space below title */
+    margin-bottom: 10px;
     color: #fff;
-    font-size: 1.3em;
+    font-size: 1.2em;
 }
-#modal-caption p {
-    margin: 10px 0; /* More space between P elements */
-    font-size: 0.95em;
+#image-modal #modal-caption p {
+    margin: 8px 0;
+    font-size: 0.9em;
 }
-#modal-caption strong {
+#image-modal #modal-caption strong {
     color: #f0f0f0;
 }
 
-.close-button {
+#image-modal .close-button { /* Specific to image modal if needed, or use general .close-button */
     position: absolute;
-    top: 20px; /* More space from top */
-    right: 40px; /* More space from right */
-    color: #fff; /* White close button */
-    font-size: 45px;
+    top: 10px;
+    right: 15px;
+    color: #fff;
+    font-size: 30px;
     font-weight: bold;
     transition: 0.3s;
     cursor: pointer;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    z-index: 1011;
 }
-.close-button:hover,
-.close-button:focus {
+#image-modal .close-button:hover,
+#image-modal .close-button:focus {
     color: #ccc;
     text-decoration: none;
 }
 
+
+/* Dialog Modals (Confirm Delete, Add Tag) */
+.modal-dialog {
+    background-color: #fff;
+    padding: 0; /* Header/footer will have padding */
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 500px;
+    text-align: left;
+    position: relative; /* For close button positioning */
+}
+
+.modal-dialog-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-dialog-header h3 {
+    margin: 0;
+    font-size: 1.3em;
+    color: #343a40;
+}
+.modal-dialog .close-button { /* General close for dialogs */
+    font-size: 24px;
+    color: #6c757d;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.modal-dialog .close-button:hover {
+    color: #343a40;
+}
+
+.modal-dialog-body {
+    padding: 20px;
+    font-size: 1em;
+    color: #495057;
+}
+.modal-dialog-body p {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.modal-dialog-body input[type="text"] {
+    width: calc(100% - 24px); /* Full width minus padding */
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1em;
+    margin-top: 5px;
+}
+.modal-dialog-body input[type="text"]:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+    outline: none;
+}
+
+.modal-dialog-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e9ecef;
+    text-align: right;
+}
+.form-button {
+    padding: 10px 18px;
+    font-size: 0.95em;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: background-color 0.2s ease;
+}
+.form-button.primary {
+    background-color: #007bff;
+    color: white;
+}
+.form-button.primary:hover {
+    background-color: #0056b3;
+}
+.form-button.secondary {
+    background-color: #6c757d;
+    color: white;
+}
+.form-button.secondary:hover {
+    background-color: #5a6268;
+}
+.form-button.danger {
+    background-color: #dc3545;
+    color: white;
+}
+.form-button.danger:hover {
+    background-color: #c82333;
+}
+
+
 .pagination-controls {
     text-align: center;
-    margin: 25px 0; /* More vertical margin */
+    margin: 25px 0;
 }
 .pagination-controls button {
     margin: 0 6px;
@@ -493,8 +674,8 @@ body {
     font-size: 0.95em;
 }
 
-#loading-gallery { /* Updated to use flex for better centering */
-    display: none; /* Initially hidden */
+#loading-gallery {
+    display: none;
     justify-content: center;
     align-items: center;
     padding: 20px;
@@ -504,10 +685,9 @@ body {
 #loading-gallery i {
     margin-right: 10px;
     font-size: 1.3em;
-    animation: fa-spin 1.5s infinite linear; /* Ensure spinner animation */
+    animation: fa-spin 1.5s infinite linear;
 }
 
-/* Ensure Font Awesome spinner animation is defined if not already by FA stylesheet */
 @keyframes fa-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
