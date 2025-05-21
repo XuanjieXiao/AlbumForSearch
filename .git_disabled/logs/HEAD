@@ -1,7 +1,0 @@
-0000000000000000000000000000000000000000 9cce919c0859c66a2dbe41e187e9c56f9e4ef7b9 XuanjieXiao <xuanjiexiao@163.com> 1747205726 +0800	commit (initial): first commit
-9cce919c0859c66a2dbe41e187e9c56f9e4ef7b9 0000000000000000000000000000000000000000 XuanjieXiao <xuanjiexiao@163.com> 1747205730 +0800	Branch: renamed refs/heads/master to refs/heads/main
-0000000000000000000000000000000000000000 9cce919c0859c66a2dbe41e187e9c56f9e4ef7b9 XuanjieXiao <xuanjiexiao@163.com> 1747205730 +0800	Branch: renamed refs/heads/master to refs/heads/main
-9cce919c0859c66a2dbe41e187e9c56f9e4ef7b9 7d62f2869fd82192864fc92bbdbc594568bf84cb XuanjieXiao <xuanjiexiao@163.com> 1747213475 +0800	commit: change web ui
-7d62f2869fd82192864fc92bbdbc594568bf84cb 15273e359f7e96fe4ff4c265d8026ea8dd18eb7c XuanjieXiao <xuanjiexiao@163.com> 1747273738 +0800	commit: cbd
-15273e359f7e96fe4ff4c265d8026ea8dd18eb7c 30899470bd8311322bb044690dcf2eea1856a31c XuanjieXiao <xuanjiexiao@163.com> 1747375893 +0800	commit: first version commit
-30899470bd8311322bb044690dcf2eea1856a31c 5e455452f6a6814bf0e89171ff6ffe37fbacfcdd XuanjieXiao <xuanjiexiao@163.com> 1747728087 +0800	commit: add:add muti picture management
