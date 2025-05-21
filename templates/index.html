@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能相册</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="公司Logo" class="nav-logo">
+                智能相册
+            </a>
+            <div class="nav-actions">
+                <button id="batch-delete-button" class="nav-button danger-button" title="删除选中的图片" style="display: none;">
+                    <i class="fas fa-trash-alt"></i> 删除选中
+                </button>
+                <button id="batch-tag-button" class="nav-button action-button" title="给选中的图片添加标签" style="display: none;">
+                    <i class="fas fa-tags"></i> 标记选中
+                </button>
+                <button id="nav-upload-button" class="nav-icon-button" title="上传图片">
+                    <i class="fas fa-upload"></i>
+                </button>
+                <a href="{{ url_for('controls_page') }}" class="nav-button" title="控制面板">
+                    <i class="fas fa-cog"></i> 控制面板
+                </a>
+            </div>
+        </div>
+    </nav>
+    <input type="file" id="unified-upload-input-hidden" multiple accept="image/*" style="display: none;">
+
+    <div class="main-page-container">
+        <section class="hero-section">
+            <h1 class="hero-title">智能相册：文搜图赋能未来</h1>
+            <div class="search-container-hero">
+                <input type="text" id="search-input" placeholder="输入中文描述搜索图片...">
+                <button id="search-button">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+            <div id="search-status" class="status-message hero-status"></div>
+        </section>
+
+        <section class="gallery-section">
+            <div class="gallery-header">
+                 <h2>
+                    图片库 (<span id="total-images-count">0</span> 张)
+                    <span id="search-results-title" style="display:none;">- 搜索结果</span>
+                </h2>
+                <div id="upload-status-main" class="status-message" style="text-align: center; margin-bottom:10px;"></div>
+            </div>
+            <div class="gallery-controls">
+                <span id="selection-info" style="display:none; margin-right: 15px;">已选择 <span id="selected-count">0</span> 张图片</span>
+                <button id="clear-selection-button" class="action-button" style="display:none;">
+                    <i class="fas fa-times-circle"></i> 清除选择
+                </button>
+            </div>
+            <div id="image-gallery" class="gallery">
+                </div>
+            <div id="loading-gallery" style="display: none; text-align: center; padding: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> 加载中...
+            </div>
+            <div id="no-more-results" style="display: none; text-align: center; padding: 10px; color: #777;">没有更多图片了</div>
+        </section>
+    </div>
+
+    <div id="image-modal" class="modal">
+        <span class="close-button">&times;</span>
+        <img class="modal-content" id="modal-image-element" alt="图片详情">
+        <div id="modal-caption">
+            <h3 id="modal-filename">文件名将显示在这里</h3>
+            <div id="modal-similarity-container" style="display: none;">
+                <p><strong>相似度:</strong> <span id="modal-similarity">N/A</span></p>
+            </div>
+            <p><strong>Qwen描述:</strong> <span id="modal-qwen-description">无</span></p>
+            <p><strong>Qwen关键词:</strong> <span id="modal-qwen-keywords">无</span></p>
+            <p><strong>用户标签:</strong> <span id="modal-user-tags">无</span></p>
+            <p><strong>已增强:</strong> <span id="modal-is-enhanced">否</span></p>
+            <button id="modal-enhance-button" style="display:none;">对此图片进行增强分析</button>
+        </div>
+    </div>
+
+    <div id="confirm-delete-modal" class="modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-dialog-header">
+                <h3>确认删除</h3>
+                <span class="close-button" onclick="document.getElementById('confirm-delete-modal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-dialog-body">
+                <p>您确定要删除选中的 <span id="delete-count">0</span> 张图片吗？此操作不可恢复，将删除图片文件、缩略图、数据库记录及FAISS索引。</p>
+            </div>
+            <div class="modal-dialog-footer">
+                <button id="cancel-delete-button" class="form-button secondary">取消</button>
+                <button id="confirm-delete-action-button" class="form-button danger">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-tag-modal" class="modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-dialog-header">
+                <h3>添加用户标签</h3>
+                <span class="close-button" onclick="document.getElementById('add-tag-modal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-dialog-body">
+                <p>为选中的 <span id="tag-target-count">0</span> 张图片添加标签。多个标签请用英文逗号 "," 分隔。</p>
+                <input type="text" id="user-tags-input" placeholder="例如：风景, 旅行, 家庭">
+            </div>
+            <div class="modal-dialog-footer">
+                <button id="cancel-tag-button" class="form-button secondary">取消</button>
+                <button id="confirm-tag-action-button" class="form-button primary">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
