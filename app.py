@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime
 # import time # Not used directly, can be removed if not needed elsewhere
 
+logging.info("welcome using sophgo smart album!")
 # --- 项目路径配置 ---
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 CHINESE_CLIP_DIR = os.path.join(CURRENT_DIR, "Chinese-CLIP")
@@ -42,6 +43,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 CLIP_MODEL_NAME = "ViT-H-14" # Make sure this matches your model's actual output for CLIP_EMBEDDING_DIM
 CLIP_MODEL_DOWNLOAD_ROOT = os.path.join(CURRENT_DIR, "models")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+logging.info("PLEASR NOTE USING {DEVICE} NOW!")
 
 # BCE_OUTPUT_DIM = fu.BCE_EMBEDDING_DIM # Defined in faiss_utils
 # FAISS_TOTAL_DIM = fu.TOTAL_EMBEDDING_DIM # Defined in faiss_utils
