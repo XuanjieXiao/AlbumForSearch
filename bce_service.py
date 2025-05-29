@@ -13,7 +13,8 @@ import os
 # maidalun1020/bce-embedding-base_v1 这个模型是输出512维度，算能适配了
 # 如果您有特定的BCE模型（例如 .tflite 格式），加载方式会有所不同
 MODEL_NAME = 'shibing624/text2vec-base-chinese' 
-# 目标输出维度，根据您的方案是512。如果模型原生维度不同，需要处理。
+# MODEL_NAME = 'uer/sbert-base-chinese-nli'
+# 目标输出维度，根据您的方案是768。如果模型原生维度不同，需要处理。
 TARGET_DIM = 768 
 
 bce_model = None
@@ -23,11 +24,12 @@ def load_bce_model():
     global bce_model, model_actual_dim
     try:
         # 检查模型是否已下载或指定本地路径
-        # model_path = os.path.join("models", "bce_model_placeholder", MODEL_NAME) # 示例本地路径
-        # if os.path.exists(model_path):
-        #     bce_model = SentenceTransformer(model_path)
-        # else:
-        bce_model = SentenceTransformer(MODEL_NAME) # 从Hugging Face Hub下载
+        # model_path = os.path.join("models", MODEL_NAME) # 示例本地路径
+        model_path = '/data/xuanjiexiao/SmartAlbumFiles/Smart-Album/models/shibing624/text2vec-base-chinese'
+        if os.path.exists(model_path):
+            bce_model = SentenceTransformer(model_path)
+        else:
+            bce_model = SentenceTransformer(MODEL_NAME) # 从Hugging Face Hub下载
         
         # 获取模型原生维度
         dummy_emb = bce_model.encode(["测试文本"])
