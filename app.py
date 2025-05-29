@@ -12,6 +12,7 @@ from datetime import datetime
 # import time # Not used directly, can be removed if not needed elsewhere
 
 logging.info("welcome using sophgo smart album!")
+
 # --- 项目路径配置 ---
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 CHINESE_CLIP_DIR = os.path.join(CURRENT_DIR, "Chinese-CLIP")
