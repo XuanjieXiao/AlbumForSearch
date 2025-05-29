@@ -21,7 +21,7 @@
                 <button id="batch-tag-button" class="nav-button action-button" title="给选中的图片添加标签" style="display: none;">
                     <i class="fas fa-tags"></i> 标记选中
                 </button>
-                <button id="nav-upload-button" class="nav-icon-button" title="上传图片">
+                <button id="nav-upload-button" class="nav-icon-button" title="上传图片到图库">
                     <i class="fas fa-upload"></i>
                 </button>
                 <a href="{{ url_for('controls_page') }}" class="nav-button" title="控制面板">
@@ -34,8 +34,16 @@
 
     <div class="main-page-container">
         <section class="hero-section">
-            <h1 class="hero-title">智能相册：文搜图赋能未来</h1>
+            <h1 class="hero-title">智能相册：文搜图、图搜图赋能未来</h1>
             <div class="search-container-hero">
+                <input type="file" id="image-search-input-hero" accept="image/*" style="display: none;">
+                <button id="image-search-upload-button-hero" class="search-image-upload-button" title="上传图片以图搜图">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <div id="image-search-preview-hero" style="display: none;">
+                    <span id="image-search-filename-hero"></span>
+                    <button id="clear-image-search-hero" title="清除已选图片">&times;</button>
+                </div>
                 <input type="text" id="search-input" placeholder="输入中文描述搜索图片...">
                 <button id="search-button">
                     <i class="fas fa-search"></i> 搜索

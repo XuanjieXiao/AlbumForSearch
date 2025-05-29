@@ -692,3 +692,81 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Styles for Image Search Upload Button in Hero */
+.search-container-hero .search-image-upload-button {
+    padding: 14px 15px; /* Adjust padding to match search button height */
+    font-size: 1.05em; /* Match search button icon size */
+    background-color: #6c757d; /* A neutral color */
+    color: white;
+    border: 1px solid #6c757d;
+    border-radius: 25px 0 0 25px; /* Rounded left corners */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    margin-right: -1px; /* Overlap border with text input or preview */
+}
+.search-container-hero .search-image-upload-button:hover {
+    background-color: #5a6268;
+}
+.search-container-hero .search-image-upload-button i {
+    /* No margin needed if it's just an icon */
+}
+
+/* Styles for Image Search Preview Area in Hero */
+#image-search-preview-hero {
+    display: flex; /* Used by JS to show */
+    align-items: center;
+    padding: 0 10px;
+    background-color: #e9ecef; /* Light background for the preview */
+    border-top: 1px solid #ced4da;
+    border-bottom: 1px solid #ced4da;
+    /* border-left will be handled by the upload button if it's visible */
+    font-size: 0.9em;
+    color: #495057;
+    height: 48px; /* Match search input height (padding + font size dependent) */
+    box-sizing: border-box;
+    line-height: 46px; /* Vertically center text if height is fixed */
+}
+#image-search-filename-hero {
+    max-width: 150px; /* Limit filename display width */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#clear-image-search-hero {
+    background: none;
+    border: none;
+    color: #dc3545; /* Red for delete/clear */
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 5px;
+    margin-left: 8px;
+    line-height: 1; /* Adjust for better vertical alignment if needed */
+}
+#clear-image-search-hero:hover {
+    color: #c82333;
+}
+
+/* Adjust search input when image search preview is visible */
+.search-container-hero #search-input:disabled {
+    background-color: #e9ecef; /* Indicate disabled state */
+    border-radius: 0; /* No rounding if preview is to its left */
+}
+
+/* When image search preview is shown, the text input's left border might need adjustment */
+/* This depends on whether image-search-upload-button-hero is hidden or not */
+/* If #image-search-upload-button-hero is hidden and #image-search-preview-hero is shown: */
+#image-search-preview-hero + #search-input {
+    border-left: none; /* Preview provides the left visual boundary */
+     border-radius: 0; /* Text input left corners should not be rounded */
+}
+#search-input { /* Ensure original style remains if no image search item is present */
+    border-radius: 25px 0 0 25px;
+}
+/* If image search button is hidden and preview IS SHOWN */
+.search-container-hero #image-search-upload-button-hero[style*="display: none"] + #image-search-preview-hero {
+    border-radius: 25px 0 0 25px; /* Round left corners of preview */
+}

@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 import uuid
 from datetime import datetime
-# import time # Not used directly, can be removed if not needed elsewhere
+import tempfile # Added for temporary file handling
 
 logging.info("welcome using sophgo smart album!")
 
@@ -41,19 +41,18 @@ CORS(app) # Allow all origins by default
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
 
 # --- 全局配置和常量 ---
-CLIP_MODEL_NAME = "ViT-H-14" # Make sure this matches your model's actual output for CLIP_EMBEDDING_DIM
+CLIP_MODEL_NAME = "ViT-H-14" 
 CLIP_MODEL_DOWNLOAD_ROOT = os.path.join(CURRENT_DIR, "models")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-logging.info("PLEASR NOTE USING {DEVICE} NOW!")
-
-# BCE_OUTPUT_DIM = fu.BCE_EMBEDDING_DIM # Defined in faiss_utils
-# FAISS_TOTAL_DIM = fu.TOTAL_EMBEDDING_DIM # Defined in faiss_utils
+logging.info(f"PLEASE NOTE USING {DEVICE} NOW!")
 
 UPLOADS_DIR = os.path.join(CURRENT_DIR, "uploads")
 THUMBNAILS_DIR = os.path.join(CURRENT_DIR, "thumbnails")
+TEMP_SEARCH_UPLOADS_DIR = os.path.join(UPLOADS_DIR, "temp_search") # For temporary search images
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 os.makedirs(THUMBNAILS_DIR, exist_ok=True)
-os.makedirs(os.path.join(CURRENT_DIR, "data"), exist_ok=True) # For DB and FAISS index
+os.makedirs(TEMP_SEARCH_UPLOADS_DIR, exist_ok=True) # Create temp dir for search image
+os.makedirs(os.path.join(CURRENT_DIR, "data"), exist_ok=True) 
 os.makedirs(CLIP_MODEL_DOWNLOAD_ROOT, exist_ok=True)
 
 clip_model = None
@@ -75,7 +74,7 @@ def load_app_config():
             with open(APP_CONFIG_FILE, 'r', encoding='utf-8') as f:
                 app_config = json.load(f)
             for key, value in default_app_config.items():
-                app_config.setdefault(key, value) # Ensure all default keys exist
+                app_config.setdefault(key, value) 
             logging.info(f"应用配置已从 {APP_CONFIG_FILE} 加载。")
         except Exception as e:
             logging.error(f"从 {APP_CONFIG_FILE} 加载配置失败: {e}。使用默认配置。")
@@ -106,8 +105,7 @@ def load_clip_model_on_startup():
             download_root=CLIP_MODEL_DOWNLOAD_ROOT
         )
         clip_model.eval()
-        # Verify CLIP_EMBEDDING_DIM
-        dummy_img = Image.new('RGB', (224, 224)) # Standard size for many CLIP models
+        dummy_img = Image.new('RGB', (224, 224)) 
         dummy_tensor = clip_preprocess(dummy_img).unsqueeze(0).to(DEVICE)
         with torch.no_grad():
             dummy_feat = clip_model.encode_image(dummy_tensor)
@@ -116,14 +114,12 @@ def load_clip_model_on_startup():
         if actual_clip_dim != fu.CLIP_EMBEDDING_DIM:
             logging.error(f"致命错误: CLIP模型 '{CLIP_MODEL_NAME}' 的实际输出维度 ({actual_clip_dim}) "
                           f"与 faiss_utils.py 中配置的 CLIP_EMBEDDING_DIM ({fu.CLIP_EMBEDDING_DIM}) 不符。请修正配置。")
-            # Potentially exit or prevent further operations if critical
-            # For now, we'll log and continue, but FAISS operations might fail or be incorrect.
         else:
             logging.info(f"Chinese-CLIP 模型 '{CLIP_MODEL_NAME}' 加载成功。图像特征维度: {actual_clip_dim} (与配置一致)")
 
     except Exception as e:
         logging.error(f"加载 Chinese-CLIP 模型失败: {e}", exc_info=True)
-        clip_model = None # Ensure it's None if loading failed
+        clip_model = None
 
 def compute_clip_image_embedding(image_path: str) -> np.ndarray | None:
     if not clip_model or not clip_preprocess:
@@ -134,8 +130,8 @@ def compute_clip_image_embedding(image_path: str) -> np.ndarray | None:
         tensor = clip_preprocess(img).unsqueeze(0).to(DEVICE)
         with torch.no_grad():
             feat = clip_model.encode_image(tensor)
-            feat /= feat.norm(dim=-1, keepdim=True) # Normalize
-        return feat.cpu().numpy().astype(np.float32)[0] # Return (dim,) array
+            feat /= feat.norm(dim=-1, keepdim=True) 
+        return feat.cpu().numpy().astype(np.float32)[0] 
     except Exception as e:
         logging.error(f"计算图像 '{image_path}' 的CLIP embedding失败: {e}")
         return None
@@ -148,8 +144,8 @@ def compute_clip_text_embedding(text: str) -> np.ndarray | None:
         tokens = clip.tokenize([text]).to(DEVICE)
         with torch.no_grad():
             feat = clip_model.encode_text(tokens)
-            feat /= feat.norm(dim=-1, keepdim=True) # Normalize
-        return feat.cpu().numpy().astype(np.float32)[0] # Return (dim,) array
+            feat /= feat.norm(dim=-1, keepdim=True) 
+        return feat.cpu().numpy().astype(np.float32)[0] 
     except Exception as e:
         logging.error(f"计算文本 '{text[:20]}...' 的CLIP embedding失败: {e}")
         return None
@@ -158,7 +154,6 @@ def generate_thumbnail(image_path: str, thumbnail_path: str, size=(256, 256)):
     try:
         img = Image.open(image_path)
         img.thumbnail(size)
-        # Ensure RGB for saving as JPEG or common formats
         if img.mode == 'RGBA' or img.mode == 'LA' or (img.mode == 'P' and 'transparency' in img.info):
             img = img.convert('RGB')
         img.save(thumbnail_path)
@@ -180,18 +175,18 @@ def process_single_image_upload(file_storage):
     saved_original_filename = unique_filename_base + file_extension
     original_path = os.path.join(UPLOADS_DIR, saved_original_filename)
     
-    saved_thumbnail_filename = unique_filename_base + "_thumb.jpg" # Standardize thumbnail extension
+    saved_thumbnail_filename = unique_filename_base + "_thumb.jpg" 
     thumbnail_path_abs = os.path.join(THUMBNAILS_DIR, saved_thumbnail_filename)
     
     image_db_id = None
-    actual_faiss_id = None # This will be same as image_db_id
+    actual_faiss_id = None 
 
     try:
         file_storage.save(original_path)
         logging.info(f"图片 '{original_filename}' 已保存到 '{original_path}'")
 
         if not generate_thumbnail(original_path, thumbnail_path_abs):
-            thumbnail_path_abs = None # Could not generate thumbnail
+            thumbnail_path_abs = None 
 
         clip_img_emb = compute_clip_image_embedding(original_path)
         if clip_img_emb is None:
@@ -200,37 +195,33 @@ def process_single_image_upload(file_storage):
             if thumbnail_path_abs and os.path.exists(thumbnail_path_abs): os.remove(thumbnail_path_abs)
             return None
 
-        # Initial embedding for FAISS (CLIP + zeros for BCE part)
         zeros_bce_emb = np.zeros(fu.BCE_EMBEDDING_DIM, dtype=np.float32)
         concatenated_emb = np.concatenate((clip_img_emb, zeros_bce_emb))
         
-        # Add to DB first to get an ID
         image_db_id = db.add_image_to_db(
             original_filename=original_filename,
-            original_path=original_path, # Store absolute path or relative to UPLOADS_DIR
-            thumbnail_path=thumbnail_path_abs, # Store absolute path or relative to THUMBNAILS_DIR
+            original_path=original_path, 
+            thumbnail_path=thumbnail_path_abs, 
             clip_embedding=clip_img_emb 
         )
 
         if image_db_id:
-            actual_faiss_id = image_db_id # Use DB ID as FAISS ID
-            db.update_faiss_id_for_image(image_db_id, actual_faiss_id) # Store it in DB
+            actual_faiss_id = image_db_id 
+            db.update_faiss_id_for_image(image_db_id, actual_faiss_id) 
 
             if fu.add_vector_to_index(concatenated_emb, actual_faiss_id):
                 logging.info(f"图片 '{original_filename}' (DB ID: {image_db_id}, FAISS ID: {actual_faiss_id}) 处理完成并入库。")
                 
-                # Qwen-VL analysis if enabled
                 if app_config.get("qwen_vl_analysis_enabled", True):
                     logging.info(f"全局Qwen-VL分析已开启，开始分析图片 ID: {image_db_id}")
                     qwen_result = qwen_service.analyze_image_content(original_path)
                     if qwen_result and (qwen_result.get("description") or qwen_result.get("keywords")):
                         db.update_image_enhancement(image_db_id, qwen_result["description"], qwen_result["keywords"])
                         
-                        # Update FAISS vector with BCE embedding from description
                         bce_desc_emb = bce_service.get_bce_embedding(qwen_result["description"]) 
                         if bce_desc_emb is not None and bce_desc_emb.shape[0] == fu.BCE_EMBEDDING_DIM:
                             updated_concatenated_emb = np.concatenate((clip_img_emb, bce_desc_emb))
-                            fu.update_vector_in_index(updated_concatenated_emb, actual_faiss_id) # Update existing entry
+                            fu.update_vector_in_index(updated_concatenated_emb, actual_faiss_id) 
                             logging.info(f"图片 ID: {image_db_id} Qwen-VL分析完成并更新了FAISS向量。")
                         else:
                             logging.warning(f"图片 ID: {image_db_id} Qwen-VL分析的BCE embedding生成失败或维度不符。FAISS向量未更新BCE部分。")
@@ -243,28 +234,26 @@ def process_single_image_upload(file_storage):
                     "filename": original_filename, 
                     "status": "success"
                 }
-            else: # Failed to add to FAISS
+            else: 
                 logging.error(f"图片 '{original_filename}' 添加到FAISS失败。回滚数据库记录。")
-                db.hard_delete_image_from_db(image_db_id) # Hard delete if FAISS add fails
-        else: # Failed to add to DB
+                db.hard_delete_image_from_db(image_db_id) 
+        else: 
             logging.error(f"图片 '{original_filename}' 存入数据库失败。")
 
-        # Cleanup if any step failed after file save
         if os.path.exists(original_path): os.remove(original_path)
         if thumbnail_path_abs and os.path.exists(thumbnail_path_abs): os.remove(thumbnail_path_abs)
         return None
 
     except Exception as e:
         logging.error(f"处理上传图片 '{original_filename}' 时发生严重错误: {e}", exc_info=True)
-        if image_db_id: # If DB entry was created
-            if actual_faiss_id and fu.faiss_index is not None: # If FAISS entry might have been created
+        if image_db_id: 
+            if actual_faiss_id and fu.faiss_index is not None: 
                 try: 
                     fu.faiss_index.remove_ids(np.array([actual_faiss_id], dtype='int64'))
                     logging.info(f"FAISS ID {actual_faiss_id} removed during error cleanup.")
                 except Exception as fe: logging.error(f"处理错误后FAISS回滚失败: {fe}")
-            db.hard_delete_image_from_db(image_db_id) # Hard delete from DB
+            db.hard_delete_image_from_db(image_db_id) 
         
-        # Cleanup files
         if os.path.exists(original_path): os.remove(original_path)
         if thumbnail_path_abs and os.path.exists(thumbnail_path_abs): os.remove(thumbnail_path_abs)
         return None
@@ -290,24 +279,24 @@ def upload_images_api():
     processed_results = []
     failed_count = 0
     for file_storage in files:
-        if file_storage and file_storage.filename: # Basic check
+        if file_storage and file_storage.filename: 
             result = process_single_image_upload(file_storage)
             if result:
                 processed_results.append(result)
             else:
                 failed_count += 1
         else:
-            failed_count +=1 # If file_storage is None or has no filename
+            failed_count +=1 
     
     if processed_results:
-        fu.save_faiss_index() # Save index after successful uploads
+        fu.save_faiss_index() 
         return jsonify({
             "message": f"成功处理 {len(processed_results)} 张图片，失败 {failed_count} 张。",
             "processed_files": processed_results
         }), 200
-    elif failed_count > 0 and not processed_results: # All failed
+    elif failed_count > 0 and not processed_results: 
          return jsonify({"error": f"所有 {failed_count} 张有效图片处理均失败。"}), 500
-    else: # No valid files provided initially
+    else: 
         return jsonify({"error": "未提供有效文件进行处理。"}), 400
 
 
@@ -320,7 +309,7 @@ def search_images_api():
     if not data: return jsonify({"error": "请求数据为空"}), 400
 
     query_text = data.get('query_text', '').strip()
-    top_k = int(data.get('top_k', 200)) # Default top_k
+    top_k = int(data.get('top_k', 200)) 
     if not query_text:
         return jsonify({"error": "查询文本不能为空"}), 400
 
@@ -343,7 +332,7 @@ def search_images_api():
     
     distances, faiss_ids = fu.search_vectors_in_index(concatenated_query_emb, top_k=top_k)
     results = []
-    if not faiss_ids: # Empty list from search_vectors_in_index
+    if not faiss_ids: 
         return jsonify({
             "query": query_text, 
             "results": [], 
@@ -353,9 +342,9 @@ def search_images_api():
 
     for i in range(len(faiss_ids)):
         faiss_id_val = int(faiss_ids[i])
-        similarity = float(distances[i]) # FAISS IndexFlatIP returns dot product (similarity for normalized vectors)
+        similarity = float(distances[i]) 
         
-        image_data = db.get_image_by_faiss_id(faiss_id_val) # Assuming faiss_id in DB is reliable
+        image_data = db.get_image_by_faiss_id(faiss_id_val) 
         if image_data:
             try:
                 keywords_list = json.loads(image_data["qwen_keywords"]) if image_data["qwen_keywords"] else []
@@ -377,7 +366,7 @@ def search_images_api():
                 "similarity": similarity, 
                 "qwen_description": image_data["qwen_description"],
                 "qwen_keywords": keywords_list,
-                "user_tags": user_tags_list, # Added
+                "user_tags": user_tags_list, 
                 "is_enhanced": image_data["is_enhanced"]
             })
         else:
@@ -389,10 +378,112 @@ def search_images_api():
         "search_mode_is_enhanced": use_enhanced
     }), 200
 
+# --- NEW: Image-to-Image Search API ---
+@app.route('/search_by_uploaded_image', methods=['POST'])
+def search_by_uploaded_image_api():
+    if not clip_model:
+        return jsonify({"error": "CLIP模型未初始化。"}), 503
+    
+    if 'image_query_file' not in request.files:
+        return jsonify({"error": "请求中未找到图片文件(image_query_file key missing)"}), 400
+    
+    uploaded_file = request.files['image_query_file']
+    if not uploaded_file or uploaded_file.filename == '':
+        return jsonify({"error": "未选择图片文件进行搜索"}), 400
+
+    logging.info(f"开始图搜图处理，上传文件名: {uploaded_file.filename}")
+
+    tmp_file_path = None
+    query_clip_emb = None
+    try:
+        # Save to a temporary file to pass its path to compute_clip_image_embedding
+        # Suffix helps Pillow determine file type, though compute_clip_image_embedding converts to RGB
+        suffix = os.path.splitext(uploaded_file.filename)[1] if os.path.splitext(uploaded_file.filename)[1] else '.tmp'
+        with tempfile.NamedTemporaryFile(dir=TEMP_SEARCH_UPLOADS_DIR, suffix=suffix, delete=False) as tmp_file:
+            uploaded_file.save(tmp_file.name)
+            tmp_file_path = tmp_file.name
+        
+        logging.info(f"图搜图: 临时文件已保存到 {tmp_file_path}")
+        query_clip_emb = compute_clip_image_embedding(tmp_file_path)
+
+    except Exception as e:
+        logging.error(f"图搜图: 处理上传图片时发生错误: {e}", exc_info=True)
+        return jsonify({"error": f"处理上传图片失败: {e}"}), 500
+    finally:
+        if tmp_file_path and os.path.exists(tmp_file_path):
+            try:
+                os.remove(tmp_file_path)
+                logging.info(f"图搜图: 临时文件 {tmp_file_path} 已删除。")
+            except Exception as e_remove:
+                logging.warning(f"图搜图: 无法删除临时文件 {tmp_file_path}: {e_remove}")
+
+    if query_clip_emb is None:
+        return jsonify({"error": "无法为上传的图片计算CLIP embedding"}), 500
+
+    # Get all valid CLIP embeddings from the database
+    # This list contains dicts: {'id': db_id, 'faiss_id': faiss_id, 'clip_embedding': np.array}
+    all_db_images_data = db.get_all_valid_images_clip_embeddings()
+    if not all_db_images_data:
+        return jsonify({"query_filename": uploaded_file.filename, "results": [], "message": "数据库中没有可比较的图片。"}), 200
+
+    db_clip_embeddings_list = [item['clip_embedding'] for item in all_db_images_data]
+    # Stack into a matrix for batch dot product: (N, D)
+    db_clip_embeddings_matrix = np.array(db_clip_embeddings_list)
+
+    # Calculate cosine similarities (dot product, since embeddings are normalized)
+    # query_clip_emb is (D,), db_clip_embeddings_matrix is (N, D)
+    # Result of dot product will be (N,)
+    similarities = np.dot(db_clip_embeddings_matrix, query_clip_emb) # Already normalized
+
+    results = []
+    SIMILARITY_THRESHOLD = 0.6 # As per requirement
+
+    for i, image_data_item in enumerate(all_db_images_data):
+        similarity_score = float(similarities[i])
+        
+        if similarity_score > SIMILARITY_THRESHOLD:
+            # Fetch full image details from DB using its ID
+            image_full_details = db.get_image_by_id(image_data_item["id"])
+            if image_full_details:
+                try:
+                    keywords_list = json.loads(image_full_details["qwen_keywords"]) if image_full_details["qwen_keywords"] else []
+                except (json.JSONDecodeError, TypeError):
+                    keywords_list = []
+                try:
+                    user_tags_list = json.loads(image_full_details["user_tags"]) if image_full_details["user_tags"] else []
+                except (json.JSONDecodeError, TypeError):
+                    user_tags_list = []
+                
+                results.append({
+                    "id": image_full_details["id"],
+                    "faiss_id": image_full_details["faiss_id"], # Though not used for this search, good to return
+                    "filename": image_full_details["original_filename"],
+                    "thumbnail_url": f"/thumbnails/{os.path.basename(image_full_details['thumbnail_path'])}" if image_full_details["thumbnail_path"] and os.path.exists(image_full_details['thumbnail_path']) else None,
+                    "original_url": f"/uploads/{os.path.basename(image_full_details['original_path'])}" if image_full_details["original_path"] and os.path.exists(image_full_details['original_path']) else None,
+                    "similarity": similarity_score, 
+                    "qwen_description": image_full_details["qwen_description"],
+                    "qwen_keywords": keywords_list,
+                    "user_tags": user_tags_list,
+                    "is_enhanced": image_full_details["is_enhanced"]
+                })
+            else:
+                logging.warning(f"图搜图: 在数据库中未找到图片ID为 {image_data_item['id']} 的详细记录，尽管其embedding存在。")
+
+    # Sort results by similarity, descending
+    results.sort(key=lambda x: x["similarity"], reverse=True)
+
+    logging.info(f"图搜图: 为 '{uploaded_file.filename}' 找到 {len(results)} 张相似图片 (阈值 > {SIMILARITY_THRESHOLD})。")
+    
+    return jsonify({
+        "query_filename": uploaded_file.filename,
+        "results": results,
+        "search_mode_is_enhanced": False # This is pure CLIP image search
+    }), 200
+
 
 @app.route('/image_details/<int:image_db_id>', methods=['GET'])
 def get_image_details_api(image_db_id):
-    image_data = db.get_image_by_id(image_db_id) # Fetches non-deleted items
+    image_data = db.get_image_by_id(image_db_id) 
     if not image_data:
         return jsonify({"error": f"图片 ID {image_db_id} 未找到"}), 404
     
@@ -403,7 +494,7 @@ def get_image_details_api(image_db_id):
     
     try:
         user_tags_list = json.loads(image_data["user_tags"]) if image_data["user_tags"] else []
-    except (json.JSONDecodeError, TypeError): # Handle if user_tags is None or malformed
+    except (json.JSONDecodeError, TypeError): 
         user_tags_list = []
 
     details = {
@@ -412,7 +503,7 @@ def get_image_details_api(image_db_id):
         "original_url": f"/uploads/{os.path.basename(image_data['original_path'])}" if image_data['original_path'] and os.path.exists(image_data['original_path']) else None,
         "qwen_description": image_data["qwen_description"] or "无",
         "qwen_keywords": keywords_list,
-        "user_tags": user_tags_list, # Added
+        "user_tags": user_tags_list, 
         "is_enhanced": image_data["is_enhanced"],
     }
     return jsonify(details), 200
@@ -453,7 +544,7 @@ def enhance_single_image_api(image_db_id):
     image_data = db.get_image_by_id(image_db_id)
     if not image_data:
         return jsonify({"error": f"图片 ID {image_db_id} 未找到"}), 404
-    if image_data["is_enhanced"]: # Already enhanced
+    if image_data["is_enhanced"]: 
         return jsonify({
             "message": f"图片 ID {image_db_id} 已经分析过了。",
             "qwen_description": image_data["qwen_description"],
@@ -469,7 +560,7 @@ def enhance_single_image_api(image_db_id):
     if clip_img_emb is None:
         logging.warning(f"图片ID {image_db_id} 在数据库中未找到纯CLIP embedding，尝试重新计算...")
         clip_img_emb = compute_clip_image_embedding(original_path)
-        if clip_img_emb is None: # Still None
+        if clip_img_emb is None: 
             return jsonify({"error": f"无法获取或计算图片 ID {image_db_id} 的CLIP embedding"}), 500
 
     logging.info(f"手动触发对图片 ID: {image_db_id} ({original_path}) 的Qwen-VL分析。")
@@ -483,17 +574,14 @@ def enhance_single_image_api(image_db_id):
         bce_desc_emb = bce_service.get_bce_embedding(qwen_result["description"])
         if bce_desc_emb is not None and bce_desc_emb.shape[0] == fu.BCE_EMBEDDING_DIM:
             updated_concatenated_emb = np.concatenate((clip_img_emb, bce_desc_emb))
-        else: # Fallback if BCE embedding fails
+        else: 
             logging.warning(f"BCE embedding for description failed or wrong dim for image {image_db_id}. Using zero vector for BCE part in FAISS.")
             zeros_bce_emb = np.zeros(fu.BCE_EMBEDDING_DIM, dtype=np.float32)
             updated_concatenated_emb = np.concatenate((clip_img_emb, zeros_bce_emb))
 
 
-        if image_data["faiss_id"] is None: # Should not happen if upload was successful
+        if image_data["faiss_id"] is None: 
             logging.error(f"图片 ID {image_db_id} 在数据库中没有FAISS ID，无法更新FAISS向量。")
-            # Attempt to assign one if it's missing but DB ID exists
-            # This case indicates some inconsistency.
-            # For now, we'll error out. A more robust system might try to recover.
             return jsonify({"error": f"图片 ID {image_db_id} 数据不一致，缺少FAISS ID。"}), 500
 
         if fu.update_vector_in_index(updated_concatenated_emb, image_data["faiss_id"]):
@@ -505,25 +593,23 @@ def enhance_single_image_api(image_db_id):
                  "qwen_keywords": qwen_result["keywords"],
                  "is_enhanced": True
                  }), 200
-        else: # FAISS update failed
+        else: 
             logging.error(f"图片 ID: {image_db_id} FAISS向量更新失败，但DB可能已更新增强状态。")
-            # DB is updated, but FAISS is not. This is an inconsistent state.
-            # Frontend will show enhanced, but search might use old vector.
             return jsonify({
                 "error": f"图片 ID {image_db_id} 分析信息已存DB，但FAISS更新失败。",
                 "qwen_description": qwen_result["description"],
                 "qwen_keywords": qwen_result["keywords"],
-                "is_enhanced": True # Reflects DB state
+                "is_enhanced": True 
                 }), 500
-    else: # Qwen analysis failed
+    else: 
         logging.warning(f"图片 ID: {image_db_id} 手动Qwen-VL分析未返回有效结果。")
         return jsonify({"error": f"图片 ID {image_db_id} 分析未产生有效结果。"}), 500
 
 @app.route('/images', methods=['GET'])
 def get_images_list_api():
     page = request.args.get('page', 1, type=int)
-    limit = request.args.get('limit', 20, type=int) # Default limit
-    images, total_count = db.get_all_images(page, limit) # Fetches non-deleted
+    limit = request.args.get('limit', 20, type=int) 
+    images, total_count = db.get_all_images(page, limit) 
     results = []
     for img_row in images:
         original_path_value = img_row['original_path']
@@ -539,7 +625,7 @@ def get_images_list_api():
             "thumbnail_url": f"/thumbnails/{os.path.basename(thumbnail_path_value)}" if thumbnail_path_value and os.path.exists(thumbnail_path_value) else None,
             "original_url": f"/uploads/{os.path.basename(original_path_value)}" if original_path_value and os.path.exists(original_path_value) else None,
             "is_enhanced": img_row["is_enhanced"],
-            "user_tags": user_tags_list, # Added
+            "user_tags": user_tags_list, 
         })
     return jsonify({
         "images": results,
@@ -549,7 +635,6 @@ def get_images_list_api():
         "total_pages": (total_count + limit - 1) // limit if limit > 0 else 0
     })
 
-# --- NEW: Batch Delete API ---
 @app.route('/delete_images_batch', methods=['POST'])
 def delete_images_batch_api():
     data = request.get_json()
@@ -601,10 +686,8 @@ def delete_images_batch_api():
         if fu.faiss_index is not None and fu.faiss_index.ntotal > 0:
             try:
                 logging.info(f"准备从FAISS中删除ID列表: {faiss_ids_to_remove_from_index}")
-                # FAISS remove_ids expects a NumPy array of int64
                 ids_to_remove_np = np.array(faiss_ids_to_remove_from_index, dtype=np.int64)
                 num_removed = fu.faiss_index.remove_ids(ids_to_remove_np)
-                # The return value of remove_ids is the number of elements successfully removed.
                 logging.info(f"从FAISS索引中移除了 {num_removed} 个向量。")
                 if num_removed > 0 : fu.save_faiss_index()
             except Exception as e_faiss_remove:
@@ -626,7 +709,6 @@ def delete_images_batch_api():
             "failed_ids": failed_ids
         }), 500
 
-# --- NEW: Batch Add User Tags API ---
 @app.route('/add_user_tags_batch', methods=['POST'])
 def add_user_tags_batch_api():
     data = request.get_json()
@@ -635,7 +717,7 @@ def add_user_tags_batch_api():
         return jsonify({"error": "无效的请求数据，需要包含 image_ids (列表) 和 user_tags (字符串列表)。"}), 400
 
     image_ids_to_tag = data['image_ids']
-    user_tags_to_add = [str(tag).strip() for tag in data['user_tags'] if str(tag).strip()] # Clean tags
+    user_tags_to_add = [str(tag).strip() for tag in data['user_tags'] if str(tag).strip()] 
 
     if not image_ids_to_tag:
         return jsonify({"error": "未提供要标记的图片ID。"}), 400
@@ -648,9 +730,6 @@ def add_user_tags_batch_api():
     for image_id in image_ids_to_tag:
         try:
             image_id_int = int(image_id)
-            # Option 1: Overwrite existing tags
-            # Option 2: Append to existing tags (more complex, requires fetching current tags)
-            # For simplicity as per request (input box implies setting new tags): Overwrite.
             if db.update_user_tags_for_image(image_id_int, user_tags_to_add):
                 updated_count += 1
             else:
@@ -679,8 +758,6 @@ def add_user_tags_batch_api():
 # --- 静态文件服务 ---
 @app.route('/uploads/<path:filename>')
 def serve_upload(filename):
-    # Basic security: prevent path traversal.
-    # Flask's send_from_directory handles this reasonably well.
     if ".." in filename or filename.startswith("/"):
         return jsonify({"error": "非法路径"}), 400
     return send_from_directory(UPLOADS_DIR, filename)
@@ -694,9 +771,9 @@ def serve_thumbnail(filename):
 # --- 应用启动 ---
 if __name__ == '__main__':
     load_app_config()
-    db.init_db() # Initializes DB schema if not exists
-    fu.init_faiss_index() # Loads or creates FAISS index
-    load_clip_model_on_startup() # Loads CLIP model
+    db.init_db() 
+    fu.init_faiss_index() 
+    load_clip_model_on_startup() 
     
     if not bce_service.bce_model: 
         logging.warning("BCE模型在bce_service中未能加载。请检查日志。")
@@ -704,5 +781,4 @@ if __name__ == '__main__':
         logging.warning("CLIP模型未能加载。请检查日志。")
 
     logging.info("智能相册后端服务准备启动...")
-    # Use debug=False for production, True for development
     app.run(host="0.0.0.0", port=5000, debug=True)

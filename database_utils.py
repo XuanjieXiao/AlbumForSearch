@@ -28,13 +28,12 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Check if 'user_tags' column exists, add if not (for backward compatibility)
     cursor.execute("PRAGMA table_info(images)")
     columns = [column['name'] for column in cursor.fetchall()]
     if 'user_tags' not in columns:
         cursor.execute("ALTER TABLE images ADD COLUMN user_tags TEXT")
         logging.info("Added 'user_tags' column to 'images' table.")
-    if 'deleted' not in columns: # Should exist, but good practice
+    if 'deleted' not in columns: 
         cursor.execute("ALTER TABLE images ADD COLUMN deleted BOOLEAN DEFAULT FALSE")
         logging.info("Added 'deleted' column to 'images' table.")
 
@@ -48,14 +47,13 @@ def init_db():
             clip_embedding ARRAY,
             qwen_description TEXT,
             qwen_keywords TEXT,
-            user_tags TEXT, -- Stores JSON array of strings, e.g., '["tag1", "tag2"]'
+            user_tags TEXT, 
             upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             is_enhanced BOOLEAN DEFAULT FALSE,
             last_enhanced_timestamp TIMESTAMP,
             deleted BOOLEAN DEFAULT FALSE 
         )
     ''')
-    # Ensure indexes exist
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_faiss_id ON images (faiss_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_original_path ON images (original_path)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_deleted ON images (deleted)")
@@ -71,7 +69,7 @@ def add_image_to_db(original_filename: str, original_path: str, thumbnail_path: 
         cursor.execute('''
             INSERT INTO images (original_filename, original_path, thumbnail_path, clip_embedding, is_enhanced, user_tags)
             VALUES (?, ?, ?, ?, ?, ?)
-        ''', (original_filename, original_path, thumbnail_path, clip_embedding, False, json.dumps([]))) # Initialize user_tags as empty JSON list
+        ''', (original_filename, original_path, thumbnail_path, clip_embedding, False, json.dumps([]))) 
         conn.commit()
         image_id = cursor.lastrowid
         logging.info(f"图片 '{original_filename}' (ID: {image_id}) 已初步添加到数据库。FAISS ID 待更新。")
@@ -97,7 +95,6 @@ def update_faiss_id_for_image(image_id: int, faiss_id: int):
         conn.close()
 
 def get_image_paths_and_faiss_id(image_id: int):
-    """ Helper to get paths and faiss_id for deletion """
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT original_path, thumbnail_path, faiss_id FROM images WHERE id = ?", (image_id,))
@@ -108,7 +105,6 @@ def get_image_paths_and_faiss_id(image_id: int):
     return None, None, None
 
 def hard_delete_image_from_db(image_id: int):
-    """ Performs a hard delete from the database. """
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -142,7 +138,6 @@ def update_image_enhancement(image_id: int, description: str, keywords: list):
         conn.close()
 
 def update_user_tags_for_image(image_id: int, user_tags: list[str]):
-    """ Updates user_tags for a single image. Tags are stored as a JSON string list. """
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -213,21 +208,51 @@ def get_clip_embedding_for_image(image_id: int) -> np.ndarray | None:
     result = cursor.fetchone()
     conn.close()
     if result and result['clip_embedding'] is not None:
-        # Assuming convert_array is correctly registered and handles the conversion
         return result['clip_embedding'] 
     return None
+
+# --- NEW: Function to get all valid CLIP embeddings for image-to-image search ---
+def get_all_valid_images_clip_embeddings():
+    """
+    Fetches ID, FAISS ID, and CLIP embedding for all non-deleted images 
+    that have a CLIP embedding.
+    Used for image-to-image search.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Ensure clip_embedding is not NULL and image is not deleted
+        cursor.execute("""
+            SELECT id, faiss_id, clip_embedding 
+            FROM images 
+            WHERE deleted = FALSE AND clip_embedding IS NOT NULL
+        """)
+        images_embeddings_data = cursor.fetchall()
+        
+        # The 'clip_embedding' column is already converted to np.ndarray by the type converter
+        # if it was registered with detect_types=sqlite3.PARSE_DECLTYPES.
+        # So, we can directly use it.
+        results = [{'id': row['id'], 
+                    'faiss_id': row['faiss_id'], 
+                    'clip_embedding': row['clip_embedding']} 
+                   for row in images_embeddings_data if row['clip_embedding'] is not None]
+        
+        logging.info(f"Fetched {len(results)} CLIP embeddings from DB for image-to-image search.")
+        return results
+    except Exception as e:
+        logging.error(f"Error fetching all CLIP embeddings: {e}", exc_info=True)
+        return []
+    finally:
+        conn.close()
 
 
 if __name__ == '__main__':
     init_db()
     print("数据库已初始化。")
-    # Example: Add a test image and then update its tags
-    # test_image_id = add_image_to_db("test.jpg", "/path/to/test.jpg", "/path/to/thumb_test.jpg", np.random.rand(768).astype(np.float32))
-    # if test_image_id:
-    #     print(f"Added test image with ID: {test_image_id}")
-    #     update_user_tags_for_image(test_image_id, ["风景", "测试"])
-    #     img_data = get_image_by_id(test_image_id)
-    #     if img_data:
-    #         print(f"Image data after tagging: {dict(img_data)}")
-    #         user_tags_loaded = json.loads(img_data['user_tags']) if img_data['user_tags'] else []
-    #         print(f"Loaded user tags: {user_tags_loaded}")
+    # Example: Test the new function
+    # all_embeddings = get_all_valid_images_clip_embeddings()
+    # if all_embeddings:
+    #     print(f"Found {len(all_embeddings)} images with CLIP embeddings.")
+    #     print(f"First item: ID {all_embeddings[0]['id']}, Embedding shape: {all_embeddings[0]['clip_embedding'].shape}")
+    # else:
+    #     print("No images with CLIP embeddings found or an error occurred.")
