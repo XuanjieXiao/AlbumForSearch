@@ -778,7 +778,7 @@ if __name__ == '__main__':
     if not bce_service.bce_model: 
         logging.warning("BCE模型在bce_service中未能加载。请检查日志。")
     if not clip_model:
-        logging.warning("CLIP模型未能加载。请检查日志。")
+        logging.warning("CLIP模型未能加载,请检查日志。")
 
     logging.info("智能相册后端服务准备启动...")
     app.run(host="0.0.0.0", port=5000, debug=True)
